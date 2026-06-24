@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title> 축산면 상세 탐방</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Pretendard", "Noto Sans KR", sans-serif;
+      background: none;
+      color: #1f2937;
+    }
+
+    body {
+      padding: 0;
+    }
+
+    .app {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .bg-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.12);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .page-wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .page-wrap::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .page-wrap::-webkit-scrollbar-thumb {
+      background: rgba(63, 143, 91, 0.35);
+      border-radius: 999px;
+    }
+
+    .page-frame {
+      width: min(1200px, 100%);
+      margin: 0 auto;
+      background: linear-gradient(180deg, #f7fff8 0%, #eef8f0 100%);
+      border-radius: 28px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 18px 22px;
+      background: rgba(255,255,255,0.38);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .back-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      background: #ffffff;
+      color: #3f8f5b;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+      border: 1px solid #9fd3ad;
+    }
+
+    .back-btn:hover,
+    .tab-btn:hover,
+    .upload-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .hero {
+      padding: 32px 28px 24px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.42), transparent 28%),
+        linear-gradient(135deg, #dff5e6 0%, #edf9f0 100%);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.05;
+      color: #2f4f38;
+      letter-spacing: -1px;
+    }
+
+    .title-wrap p {
+      margin: 10px 0 0;
+      color: #4d6353;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .content {
+      padding: 24px;
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      background: #e7f4eb;
+      color: #3f8f5b;
+      transition: 0.18s ease;
+      border: 1px solid #c9e5d2;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(180deg, #6db785 0%, #3f8f5b 100%);
+      color: white;
+      box-shadow: 0 8px 18px rgba(63, 143, 91, 0.22);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.88);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.07);
+      border: 1px solid rgba(63,143,91,0.08);
+    }
+
+    .card h2,
+    .card h3 {
+      margin: 0 0 12px;
+      color: #2f4f38;
+      letter-spacing: -0.4px;
+    }
+
+    .card h2 {
+      font-size: 24px;
+    }
+
+    .card h3 {
+      font-size: 18px;
+    }
+
+    .card p,
+    .card li {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.8;
+      color: #4d6353;
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .image-frame {
+      width: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #e2efe5;
+      border: 2px solid #d6eadc;
+    }
+
+    .main-image-frame {
+      min-height: 260px;
+    }
+
+    .map-image-frame {
+      min-height: 180px;
+      margin-top: 16px;
+    }
+
+    .section-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .source-note {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #6b7280;
+      text-align: right;
+    }
+
+    .history-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .info-item {
+      background: #f6fcf7;
+      border: 1px solid #dcefe1;
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .info-item .q {
+      font-size: 14px;
+      font-weight: 800;
+      color: #3f8f5b;
+      margin-bottom: 8px;
+    }
+
+    .answer-status,
+    .travel-answer-box {
+      margin-top: 10px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #edf9f0;
+      color: #315c40;
+      line-height: 1.7;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .travel-layout {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .travel-main-box,
+    .travel-side-box {
+      background: rgba(255,255,255,0.88);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.07);
+      border: 1px solid rgba(63,143,91,0.08);
+    }
+
+    .travel-main-box h2,
+    .travel-side-box h3 {
+      margin: 0 0 12px;
+      color: #2f4f38;
+    }
+
+    .travel-main-box p,
+    .travel-side-box p {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.75;
+      color: #4d6353;
+    }
+
+    .featured-list,
+    .student-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .place-card {
+      background: #f6fcf7;
+      border: 1px solid #dcefe1;
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .place-thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 14px;
+      object-fit: cover;
+      display: block;
+      margin-bottom: 12px;
+      background: #dde9e0;
+    }
+
+    .place-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #2f4f38;
+      margin-bottom: 8px;
+    }
+
+    .place-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #4d6353;
+    }
+
+    .upload-btn {
+      border: none;
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 14px;
+      background: #ffffff;
+      color: #3f8f5b;
+      border: 1px solid #9fd3ad;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    }
+
+    .firebase-box {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #f6fcf7;
+      border: 1px dashed #b9d5c1;
+      color: #4d6353;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 980px) {
+      .page-wrap {
+        padding: 12px;
+      }
+
+      .grid-2,
+      .travel-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .content {
+        padding: 16px;
+      }
+
+      .hero {
+        padding: 24px 18px 18px;
+      }
+
+      .top-bar {
+        padding: 14px 16px;
+      }
+
+      .main-image-frame {
+        min-height: 220px;
+      }
+
+      .map-image-frame {
+        min-height: 160px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .tab-btn {
+        width: 100%;
+      }
+
+      .title-wrap h1 {
+        font-size: 34px;
+      }
+    }
+.toast-msg {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(63, 143, 91, 0.95);
+  color: white;
+  padding: 12px 25px;
+  border-radius: 50px;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.4s ease;
+  pointer-events: none;
+}
+.toast-msg.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.post-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.delete-btn { color: #e53e3e; margin-left: auto; }
+
+.comment-section {
+  margin-top: 10px;
+  background: #f9fcf9;
+  padding: 10px;
+  border-radius: 10px;
+}
+.comment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 4px;
+}
+.comment-input-group {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+.comment-input {
+  flex: 1;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  font-size: 12px;
+}
+.sort-btn {
+  cursor: pointer;
+  border: 1px solid #3f8f5b;
+  background: white;
+  color: #3f8f5b;
+  padding: 6px 12px;
+  border-radius: 6px; 
+  font-size: 12px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.sort-btn.active {
+  background: #3f8f5b;
+  color: white;
+}
+   </style>
+</head>
+<body>
+ <div class="app">
+    <video class="bg-video" autoplay muted loop playsinline>
+      <source src="/video/background.mp4" type="video/mp4" />
+    </video>
+    <div class="bg-overlay"></div>
+    <div class="page-wrap">
+      <div class="page-frame">
+          <div class="top-bar">
+          <button class="back-btn" type="button" onclick="setTimeout(() => history.back(), 150)">← 영덕 지도로 돌아가기</button>
+        </div>
+
+        <section class="hero">
+          <div class="hero-top">
+            <div class="title-wrap">
+              <h1>축산면</h1>
+              <p>천리미항 축산항과 백악기의 신비를 간직한 푸른 대게의 길</p>
+            </div>
+          </div>
+        </section>
+
+        <main class="content">
+          <div class="tab-bar">
+            <button class="tab-btn active" data-tab="tab1">우리 동네</button>
+            <button class="tab-btn" data-tab="tab2">우리 동네 역사</button>
+            <button class="tab-btn" data-tab="tab4">여행추천</button>
+          </div>
+
+          <section class="tab-panel active" id="tab1">
+            <div class="grid-2">
+              <div class="card">
+                <h2>우리 동네는 어떤 곳일까요?</h2>
+                <div class="image-frame main-image-frame">
+                  <img src="/images/youngduk/축산면죽도산전망대.jpg" alt="죽도산 전망대 전경" class="section-image" />
+                </div>
+                <div class="image-frame map-image-frame">
+                  <img src="/images/youngduk/chuksan.jpg" alt="축산면 지도" class="section-image" />
+                </div>
+                <p class="source-note">출처: 영덕군청 / NAVER 지도</p>
+              </div>
+
+              <div class="stack">
+                <div class="card">
+                  <h3>우리 동네 대표 장소: 죽도산 전망대</h3>
+                  <p>
+                    해발 80m의 죽도산 정상에 우뚝 솟은 전망대는 축산항의 상징입니다. 과거 등대가 있던 자리에 세워진 7층 높이의 전망대에서는 축산항 전체와 동해의 수평선, 멀리 풍력발전단지까지 360도 파노라마 뷰로 감상할 수 있습니다.<br><br>
+                    블루로드 B코스의 하이라이트이자 상쾌한 바다 내음을 만끽할 수 있는 영덕 최고의 '뷰맛집'입니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+         <section class="tab-panel" id="tab2">
+          <div class="history-stack">
+            <div class="card">
+              <h2>지명의 유래</h2>
+              <p>
+                **축산(丑山)**은 마을의 지형이 소가 누워 있는 형상, 즉 '와우형(臥牛形)'이라 하여 붙여진 이름입니다. 
+                동해안의 주요 항구인 축산항(丑山浦)은 예로부터 '천리미항'이라 불릴 만큼 아름답고 아늑한 포구로 유명하며, 대게의 원조마을인 차유마을을 품고 있는 유서 깊은 고장입니다.
+              </p>
+            </div>
+
+            <div class="card">
+              <h2>역사</h2>
+              <div class="info-list">
+                <div class="info-item">
+                  <div class="q">선사 시대/고조선 시대</div>
+                  <p>축산항 일대는 천혜의 항구 조건을 갖추어 아주 오래전부터 어로 문화가 발달했습니다. 자연 방파제 역할을 하는 죽도산 덕분에 거친 동해에서도 안전한 삶의 터전이 되었으며, 고대 해안 공동체의 중심지 역할을 했습니다.</p>
+                </div>
+                <div class="info-item">
+                  <div class="q">삼국 시대 이전</div>
+                  <p>부족 국가 시대부터 동해안을 잇는 주요 해상로이자 교통의 요충지였습니다. 비옥한 평야와 바다를 동시에 낀 지형적 이점 덕분에 영덕 내륙과 해안을 연결하는 가교 역할을 수행했습니다.</p>
+                </div>
+                <div class="info-item">
+                  <div class="q">조선 시대: 소식의 통로</div>
+                  <p>대소산 정상에 봉수대가 설치되어 축산포의 동태를 한양 남산까지 전하는 중요한 통신 요충지가 되었습니다. 남북의 봉수대를 잇는 가교 역할을 하며 국방의 핵심 기능을 담당했습니다.</p>
+                </div>
+                <div class="info-item">
+                  <div class="q">일제강점기 및 근대: 수난과 극복</div>
+                  <p>죽도산에 등대가 세워졌으나 태평양 전쟁 당시 폭격 대상이 된다는 이유로 철거되는 아픔을 겪었습니다. 광복 이후 다시 세워진 등대는 현재의 전망대로 탈바꿈하며 항구의 역사를 묵묵히 지켜오고 있습니다.</p>
+                </div>
+                <div class="info-item">
+                  <div class="q">현대: 대게 원조 마을과 관광 명소</div>
+                  <p>대게의 원조지로 공인된 차유마을과 백악기 시대의 신비를 간직한 경정리 지질공원이 주목받고 있습니다. 영덕 블루로드의 핵심 구간으로서 역사와 자연이 어우러진 명품 관광지로 도약하고 있습니다.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h2>주요 마을 이름 유래</h2>
+              <div class="info-list">
+                <div class="info-item">
+                  <div class="q">축산리(丑山里)</div>
+                  <p>면의 중심지로, 마을을 에워싼 산의 모양이 소(丑)가 누워 있는 형세라 하여 붙여진 이름입니다.</p>
+                </div>
+                <div class="info-item">
+                  <div class="q">경정리(景汀里)</div>
+                  <p>경치가 아름다운 물가(汀)라는 뜻입니다. 대게 원조마을인 차유마을이 속해 있으며, 붉은 바위가 장관인 국가지질공원이 위치해 있습니다.</p>
+                </div>
+                <div class="info-item">
+                  <div class="q">기암리(奇巖里)</div>
+                  <p>마을 주변에 기이한 바위(奇巖)들이 많이 솟아 있어 붙여진 이름으로, 산세와 바위가 조화를 이루는 동네입니다.</p>
+                </div>
+                <div class="info-item">
+                  <div class="q">도곡리(陶谷里)</div>
+                  <p>예부터 질그릇(陶)을 굽던 골짜기라 하여 붙여진 이름으로, 기름진 토질과 풍부한 땔감을 바탕으로 마을이 형성되었습니다.</p>
+                </div>
+                <div class="info-item">
+                  <div class="q">상원리(上院里)</div>
+                  <p>조선 시대 관리들이 쉬어가던 '원(院)'이 있던 곳 중 위쪽에 위치한 마을이라는 뜻을 담고 있습니다.</p>
+                </div>
+              </div>
+            </div>
+          </div> 
+        </section>
+
+        <section class="tab-panel" id="tab4">
+          <div class="travel-layout"> <div class="travel-main-box">
+              <h2>대표 추천 장소</h2>
+              <div class="featured-list">
+                <div class="place-card">
+                  <img src="/images/youngduk/축산면대소산봉수대.jpg" alt="봉수대" class="place-thumb" />
+                  <div class="place-title">대소산 봉수대</div>
+                  <div class="place-desc">해발 282m 정상에서 축산항의 풍경과 망망대해를 360도 파노라마로 감상할 수 있는 최고의 조망점입니다.</div>
+                </div>
+                <div class="place-card">
+                  <img src="/images/youngduk/축산면경정리국가지질공원.jpg" alt="지질공원" class="place-thumb" />
+                  <div class="place-title">경정리 국가지질공원</div>
+                  <div class="place-desc">1억 년 전 백악기 시대의 붉은 바위들이 파도와 어우러진 신비로운 풍경을 자랑하는 지질학적 보물창고입니다.</div>
+                </div>
+                <div class="place-card">
+                  <img src="/images/youngduk/축산면경정해수욕장.png" alt="해수욕장" class="place-thumb" />
+                  <div class="place-title">경정 해수욕장 (시크릿 비치)</div>
+                  <div class="place-desc">BTS 뮤직비디오 촬영지로 유명하며, 맑은 물과 빨간 등대가 어우러진 호젓한 낭만을 만끽할 수 있는 해변입니다.</div>
+                </div>
+              </div>
+            </div>
+
+      <div class="travel-side-box card">
+        <h3>우리들의 추천 장소</h3>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+         <button id="sort-recent" class="sort-btn active">최신순</button>
+        <button id="sort-likes" class="sort-btn">인기순</button>  </div>
+        <div class="input-group" style="margin-bottom:15px;">
+          <div id="display-nickname" style="font-weight: 800; color: #3f8f5b; margin-bottom: 8px; font-size: 1.1rem;"></div>
+          <textarea id="user-comment" placeholder="우리 동네의 대표장소를 추천해봅시다!" style="width:100%; height:160px; border:1px solid #ddd; border-radius:8px; padding:15px; font-size:1rem; resize:none; line-height:1.5;"></textarea>
+        </div>
+       <div style="margin: 10px 0;">
+         <label for="photo-input" style="display:inline-block; cursor:pointer; background:#f0f7f2; padding:8px 15px; border-radius:10px; font-size:13px; border:1px solid #3f8f5b; color:#3f8f5b; font-weight:bold;">📸 사진 첨부하기</label>
+          <input type="file" id="photo-input" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+         <img id="image-preview" src="#" style="display:none; width:100%; border-radius:14px; margin-top:10px; border:1px solid #eee;">
+          </div>
+        <div class="student-list" id="post-list"></div>
+        <button class="upload-btn" id="student-upload-btn" type="button">추천 장소 남기기</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, doc, deleteDoc, updateDoc, increment, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFRZFFaU4h-LMGcHwYYoni-SyuDY0-2k8",
+    authDomain: "where-is-this-ef31b.firebaseapp.com",
+    projectId: "where-is-this-ef31b",
+    storageBucket: "where-is-this-ef31b.firebasestorage.app",
+    messagingSenderId: "959623211817",
+    appId: "1:959623211817:web:96624f9be6a4297d8ba538"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  const storage = getStorage(app);
+
+  const TOWN_NAME = "축산면"; 
+
+  let currentNick = "";
+  let unsubscribe = null;
+
+  function showToast(message) {
+    const toast = document.createElement("div");
+    toast.className = "toast-msg";
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 100);
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 400);
+    }, 2500);
+  }
+let selectedFile = null; 
+
+window.handleFileSelect = (e) => {
+  selectedFile = e.target.files[0];
+  const preview = document.getElementById("image-preview");
+  if (selectedFile) {
+    const reader = new FileReader();
+    reader.onload = (ex) => {
+      preview.src = ex.target.result;
+      preview.style.display = "block"; 
+    };
+    reader.readAsDataURL(selectedFile);
+  } else {
+    preview.style.display = "none";
+  }
+};
+  window.deletePost = async (postId) => {
+    if (confirm("정말 이 추천글을 삭제할까요?")) {
+      try {
+        await deleteDoc(doc(db, "recommendations", postId));
+        showToast("삭제되었습니다. 🗑️");
+      } catch (e) { console.error(e); }
+    }
+  };
+
+  window.likePost = async (postId) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    const postRef = doc(db, "recommendations", postId);
+    try {
+      const postSnap = await getDoc(postRef);
+      const postData = postSnap.data();
+      const isLiked = postData.likedBy && postData.likedBy.includes(user.uid);
+      if (isLiked) {
+        await updateDoc(postRef, { likes: increment(-1), likedBy: arrayRemove(user.uid) });
+        showToast("추천을 취소했습니다. 💔");
+      } else {
+        await updateDoc(postRef, { likes: increment(1), likedBy: arrayUnion(user.uid) });
+        showToast("추천 완료! 👍");
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  window.deleteComment = async (postId, commentIdx) => {
+    if (!confirm("댓글을 삭제하시겠습니까?")) return;
+    const postRef = doc(db, "recommendations", postId);
+    try {
+      const postSnap = await getDoc(postRef);
+      const comments = postSnap.data().comments;
+      const newComments = comments.filter((_, index) => index !== commentIdx);
+      await updateDoc(postRef, { comments: newComments });
+      showToast("댓글이 삭제되었습니다.");
+    } catch (e) { console.error(e); }
+  };
+
+  window.addComment = async (postId) => {
+    const input = document.getElementById(`comment-input-${postId}`);
+    if (!input.value) return showToast("댓글 내용을 입력해주세요!");
+    try {
+      const postRef = doc(db, "recommendations", postId);
+      await updateDoc(postRef, {
+        comments: arrayUnion({
+          writer: currentNick,
+          uid: auth.currentUser.uid,
+          text: input.value,
+          createdAt: new Date().toISOString()
+        })
+      });
+      input.value = "";
+      showToast("댓글이 등록되었습니다! 💬");
+    } catch (e) { console.error(e); }
+  };
+
+ function loadPosts(sortBy = "createdAt") {
+  if (unsubscribe) unsubscribe();
+  
+  let q;
+  if (sortBy === "likes") {
+    q = query(
+      collection(db, "recommendations"), 
+      where("town", "==", TOWN_NAME), 
+      orderBy("likes", "desc"),
+      orderBy("createdAt", "desc")
+    );
+  } else {
+    q = query(
+      collection(db, "recommendations"), 
+      where("town", "==", TOWN_NAME), 
+      orderBy("createdAt", "desc")
+    );
+  }
+
+  unsubscribe = onSnapshot(q, (snapshot) => {
+    const listDiv = document.getElementById("post-list");
+    if(!listDiv) return;
+    
+    listDiv.innerHTML = ""; 
+    
+    if (snapshot.empty) {
+      listDiv.innerHTML = "<div style='text-align:center; padding:20px; color:#999;'>첫 번째 추천글을 남겨보세요! 🌿</div>";
+      return;
+    }
+    
+    snapshot.forEach((postDoc) => {
+      const data = postDoc.data();
+      const postId = postDoc.id;
+      const isMyPost = data.uid === auth.currentUser?.uid;
+      
+      const commentHtml = (data.comments || []).map((c, index) => {
+        const isMyComment = c.uid === auth.currentUser?.uid;
+        return `
+          <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px;"><b style="color:#3f8f5b;">${c.writer}:</b> ${c.text}</span>
+            ${isMyComment ? `<button onclick="deleteComment('${postId}', ${index})" style="background:none; border:none; color:#e53e3e; cursor:pointer; font-size:10px;">✕</button>` : ""}
+          </div>`;
+      }).join("");
+
+      listDiv.innerHTML += `
+        <div class="place-card" style="margin-bottom:20px; border:1px solid #dcefe1; position:relative;">
+          <div style="color:#3f8f5b; font-size:14px; font-weight:bold;">${data.writer}님의 추천</div>
+          ${data.photo ? `<img src="${data.photo}" style="width:100%; border-radius:10px; margin:10px 0; border:1px solid #eee;">` : ""}
+          <div style="margin:10px 0; font-size:14px; line-height:1.5;">${data.text}</div>
+          <div class="post-actions">
+            <button class="action-btn" onclick="likePost('${postId}')">❤️ 추천 ${data.likes || 0}</button>
+            <button class="action-btn">💬 댓글 ${(data.comments || []).length}</button>
+            ${isMyPost ? `<button class="action-btn delete-btn" onclick="deletePost('${postId}')">지우기</button>` : ""}
+          </div>
+          <div class="comment-section" style="background:#f9fcf9; padding:10px; border-radius:10px; margin-top:10px;">
+            <div id="comments-${postId}">${commentHtml}</div>
+            <div class="comment-input-group" style="display:flex; gap:5px; margin-top:8px;">
+              <input type="text" id="comment-input-${postId}" class="comment-input" placeholder="댓글 달기..." style="flex:1; padding:5px; border-radius:5px; border:1px solid #ddd; font-size:12px;">
+              <button onclick="addComment('${postId}')" style="border:none; background:#3f8f5b; color:white; border-radius:4px; padding:4px 10px; cursor:pointer; font-size:12px;">등록</button>
+            </div>
+          </div>
+        </div>`;
+    });
+  }, (err) => {
+    console.error("쿼리 에러:", err);
+    if (err.code === 'failed-precondition') showToast("색인 설정이 일치하지 않습니다! ⏳");
+  });
+}
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentNick = user.displayName || user.email.split('@')[0];
+      document.getElementById("display-nickname").innerText = `✍️ 작성자: ${currentNick}`;
+      loadPosts("createdAt");
+    } else {
+      location.href = "start.html";
+    }
+  });
+
+  document.getElementById("sort-recent").onclick = () => {
+    loadPosts("createdAt");
+    document.getElementById("sort-recent").style.cssText = "background:#3f8f5b; color:white;";
+    document.getElementById("sort-likes").style.cssText = "background:white; color:#3f8f5b; border:1px solid #3f8f5b;";
+  };
+  document.getElementById("sort-likes").onclick = () => {
+    loadPosts("likes");
+    document.getElementById("sort-likes").style.cssText = "background:#3f8f5b; color:white;";
+    document.getElementById("sort-recent").style.cssText = "background:white; color:#3f8f5b; border:1px solid #3f8f5b;";
+  };
+document.getElementById("student-upload-btn").addEventListener("click", async () => {
+  const comment = document.getElementById("user-comment").value;
+  if (!comment) return showToast("추천 내용을 입력해주세요! ✍️");
+  
+  const btn = document.getElementById("student-upload-btn");
+  btn.disabled = true; 
+  btn.innerText = "업로드 중...";
+
+  try {
+    let photoURL = "";
+
+    if (selectedFile) {
+      const storageRef = ref(storage, `town_photos/${Date.now()}_${selectedFile.name}`);
+      const snapshot = await uploadBytes(storageRef, selectedFile);
+      photoURL = await getDownloadURL(snapshot.ref); 
+    }
+
+    await addDoc(collection(db, "recommendations"), {
+      town: TOWN_NAME,
+      writer: currentNick,
+      uid: auth.currentUser.uid,
+      text: comment,
+      photo: photoURL, 
+      likes: 0,
+      likedBy: [],
+      comments: [],
+      createdAt: new Date()
+    });
+
+    showToast("추천이 등록되었습니다! 🎉");
+    
+    document.getElementById("user-comment").value = "";
+    document.getElementById("photo-input").value = "";
+    document.getElementById("image-preview").style.display = "none";
+    selectedFile = null;
+    btn.disabled = false;
+    btn.innerText = "추천 등록하기";
+
+    setTimeout(() => loadPosts("createdAt"), 300);
+
+  } catch (e) {
+    console.error(e);
+    showToast("등록 실패. 다시 시도해주세요.");
+    btn.disabled = false;
+    btn.innerText = "추천 등록하기";
+  }
+});
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(btn.dataset.tab).classList.add("active");
+    });
+  });
+</script>
+<script src="/sound.js"></script>
+</body>
+</html>
