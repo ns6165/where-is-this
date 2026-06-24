@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>영주시 동별 상세지도</title>
+<style>
+   
+   html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000; 
+}
+
+   .app-shell {
+  width: 100vw;
+  height: 100vh;
+  background: none;
+}
+
+   .app-stage {
+  position: relative;
+  width: 100vw;  
+  height: 100vh;
+  aspect-ratio: auto; 
+  background: transparent;
+  box-shadow: none;
+}
+
+    .map-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .video-dim {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.12);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .ui-layer {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+    }
+
+ .map-area {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: min(86%, 92vh);
+  aspect-ratio: 1440 / 1440;
+  transform: translate(-50%, -50%);
+  z-index: 12;
+}
+
+  .map-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; 
+}
+
+    .svg-overlay {
+      position: absolute;
+      inset: 0;
+      aspect-ratio: 1440 / 1440;
+      aspect-ratio: 1440 / 1440;
+      transform: translate(9%, -13%);
+      width: 50%;
+      height: 50%;
+      z-index: 2;
+    }
+
+   .gyeongbuk-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.gyeongbuk-map .clickable-region,
+.gyeongbuk-map path.clickable-region,
+.gyeongbuk-map polygon.clickable-region,
+.gyeongbuk-map rect.clickable-region,
+.gyeongbuk-map circle.clickable-region {
+  cursor: pointer;
+  pointer-events: visiblePainted;
+  fill: rgba(255, 255, 255, 0.001) !important;
+  stroke: rgba(255, 255, 255, 0.72) !important;
+  stroke-width: 2.2 !important;
+  vector-effect: non-scaling-stroke;
+  transition: fill 0.18s ease, filter 0.18s ease, opacity 0.18s ease;
+}
+
+.gyeongbuk-map .clickable-region:hover,
+.gyeongbuk-map path.clickable-region:hover,
+.gyeongbuk-map polygon.clickable-region:hover,
+.gyeongbuk-map rect.clickable-region:hover,
+.gyeongbuk-map circle.clickable-region:hover,
+.gyeongbuk-map .clickable-region.is-active,
+.gyeongbuk-map path.clickable-region.is-active,
+.gyeongbuk-map polygon.clickable-region.is-active,
+.gyeongbuk-map rect.clickable-region.is-active,
+.gyeongbuk-map circle.clickable-region.is-active {
+  fill: rgba(255, 193, 7, 0.38) !important;
+  filter: drop-shadow(0 0 6px rgba(255, 193, 7, 0.8));
+}
+
+    .region-label {
+      position: fixed;
+      z-index: 30;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.96);
+      color: #222;
+      font-size: 14px;
+      font-weight: 700;
+      pointer-events: none;
+      transform: translate(-50%, calc(-100% - 12px));
+      white-space: nowrap;
+      display: none;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    }
+
+
+    .base-video { z-index: 0; }
+    .overlay-container {
+      position: absolute;
+      top: -8%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 55%;
+      height: 45%;
+      z-index: 15;
+      pointer-events: none;
+    }
+    .overlay-video-canvas { width: 100%; height: 100%; display: block; }
+
+
+
+
+.page-title {
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 55;
+  margin: 0;
+  font-size: 66px;
+  font-weight: 900;
+  color: #111;
+  letter-spacing: -2px;
+  text-shadow:
+    -2px -2px 0 #fff,
+     2px -2px 0 #fff,
+    -2px  2px 0 #fff,
+     2px  2px 0 #fff,
+     0px  4px 10px rgba(0,0,0,0.18);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.back-btn {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 100;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px); 
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.back-btn:active {
+  transform: scale(0.9);
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: 60px; 
+  transform: translateX(-50%);
+  padding: 12px 28px;
+  font-size: 30px;
+  font-weight: 700;
+  color: white; 
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 50;
+  white-space: nowrap;
+  letter-spacing: -0.5px;
+}
+
+  </style>
+</head>
+<body>
+<div class="app-shell">
+<div class="app-stage">
+<video autoplay="" class="map-video base-video" loop="" muted="" playsinline="">
+<source src="/video/background.mp4" type="video/mp4"/>
+</video>
+<div class="video-dim"></div>
+<div class="ui-layer">
+<h1 class="page-title">영주시 동별 상세지도</h1>
+<div class="back-btn" onclick="setTimeout(() => location.href='/index.html', 200)">
+<svg fill="none" height="24" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24" width="24">
+<path d="M15 18l-6-6 6-6"></path>
+</svg>
+</div>
+<div class="hint">지도의 구역을 클릭하면 상세 정보를 볼 수 있습니다.</div>
+<div id="legal-dong-selector" style="display:none; position: fixed; bottom: 380px; left: 50%; transform: translateX(-50%); z-index: 100; background: rgba(255, 255, 255, 0.98); padding: 30px; border-radius: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); text-align: center; width: 90%; max-width: 550px; border: 1px solid rgba(255,255,255,0.3);">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <span style="font-size: 15px; color: #888; font-weight: 500;">탐구하고 싶은 동네를 선택해봅시다</span>
+    <button onclick="document.getElementById('legal-dong-selector').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color: #ccc;">✕</button>
+  </div>
+  <h2 id="admin-name-display" style="margin: 0 0 20px 0; color: #222; font-size: 28px; font-weight: 900;">행정동명</h2>
+  <div id="legal-dong-buttons" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; max-height: 300px; overflow-y: auto; padding: 10px;">
+    </div>
+</div>
+<div class="map-area">
+<img alt="영주시 동별 상세지도" class="map-bg" src="/images/youngju_detail.png"/>
+<svg class="gyeongbuk-map svg-overlay" fill="none" height="1085" preserveaspectratio="xMidYMid meet" viewbox="0 0 1440 1085" width="1440" xmlns="http://www.w3.org/2000/svg">
+<path class="clickable-region" d="M557 235.5L545 252.5L543.5 269L524 361.5C518.5 376.5 506.2 408.6 501 417C494.5 427.5 495.5 428.5 497 438.5C498.2 446.5 510.5 451.167 516.5 452.5H517.5C547.1 443.3 553.167 444 552.5 445.5C564 449.667 594.6 463 625 483C655.4 503 657.667 521 655 527.5L602 641.5C610.667 648.167 628.3 662.6 629.5 667C631 672.5 630 703.5 645.5 721.5C661 739.5 677.5 733 718 759C750.4 779.8 772.5 766.667 779.5 757.5V754C778 750.333 775 742.8 775 742C775 741 773.5 731 773.5 730C773.5 729 775 714 775 713.5C775 713.1 782.333 700 786 693.5L809.5 673.5L858.5 653C864.167 649.5 875.8 642.4 877 642C878.5 641.5 887.5 636 888.5 635C889.5 634 890 634 890.5 633.5C891 633 893.5 635 894.5 636C895.5 637 912 646 913.5 647C915 648 929.5 653.5 933.5 654.5C937.5 655.5 940.5 655 941.5 654.5C942.5 654 952 651.5 953 650.5C954 649.5 965.5 641.5 967 640.5C968.5 639.5 981.5 621 983 618.5C984.2 616.5 985.5 606 986 601L988 596.5C998.333 583.5 1019.1 557.2 1019.5 556C1019.9 554.8 1024 550.167 1026 548V545L1023.5 543L1013.5 537H1010.5L1007 540.5L994.5 549C989.333 552.167 978.7 558.6 977.5 559C976 559.5 966 563.5 964.5 564C963.3 564.4 960.667 565.167 959.5 565.5L954.5 562.5C953 560.333 949.9 555.9 949.5 555.5C949.1 555.1 947 545.333 946 540.5L941.5 516.5C940.5 511 938.5 499.8 938.5 499C938.5 498.2 937.5 496 937 495L933 491C932.2 490.2 918 481 911 476.5L872 446.5C868.333 443.833 860.3 438.1 857.5 436.5C854 434.5 848.5 431 846 429.5C843.5 428 838.5 425.5 835 424C832.2 422.8 828.167 420.5 826.5 419.5L822 418.5C821.333 419.333 819.9 421.1 819.5 421.5C819 422 805.5 434 804.5 435C803.5 436 797.5 441 795.5 442C793.5 443 789 444.5 788.5 444.5C788 444.5 782.5 443 780.5 442.5C778.5 442 778 440 778 439.5C778 439.1 775 436.333 773.5 435L770.5 424.5L771.5 408L776.5 379.5L780.5 364L786 347.5L797.5 327L805.5 317.5L815.5 310L826 303.5L836.5 296L850 291L866.5 285L879.5 283L892.5 274L897 266.5V251L895.5 243C894.5 239.333 892.5 231.8 892.5 231C892.5 230.2 888.5 223.667 886.5 220.5C883.667 214.5 877.9 202.2 877.5 201C877 199.5 872 194 870.5 192C869 190 866 183.5 865 180.5C864.2 178.1 861.333 167.5 860 162.5C860 157 859.7 145.4 858.5 143C857.3 140.6 858 134.667 858.5 132L857 126.5L834.5 137C831 139 823.4 143 821 143C818.6 143 812.667 145 810 146C806.667 145 799.7 143 798.5 143C797.3 143 787 135.667 782 132L771.5 124L760.5 106.5C758.5 102.5 754.5 94.3 754.5 93.5C754.5 92.5 748.5 80 748.5 79C748.5 78 744 63.5 743.5 62C743 60.5 742 55 741.5 55H740.5C740.333 55.5 739.9 56.6 739.5 57C739.1 57.4 735.667 63.8333 734 67L726 80L711.5 100L705.5 106.5C701.167 110.5 692.4 118.5 692 118.5C691.5 118.5 687 122.5 684.5 124C682.5 125.2 683 126.167 683.5 126.5L687 143C687.833 148.5 689.5 159.6 689.5 160C689.5 160.5 690.5 171 690.5 172.5C690.5 173.7 689.833 174.667 689.5 175H685.5C684 175 681.5 174 679 173.5C676.5 173 673.5 173.5 671 173.5H663.5L656 174L645.5 177L628 182L602.5 194.5L584.5 207L572.5 218L557 235.5Z" data-region="상망동" stroke="black" stroke-width="0.1"></path>
+<path class="clickable-region" d="M294 468C291.2 494.4 300.167 527.667 305 541C271.8 520.6 252.5 550.833 247 568.5C247.667 568.333 249 574.2 249 599C215.4 618.2 176.333 602 161 591.5L156.5 590C154.167 590.5 149.4 591.6 149 592C148.6 592.4 136.833 602.167 131 607L120 621.5L104 647L74 714V716C93 724.833 131.1 742.6 131.5 743C131.9 743.4 132.333 742.167 132.5 741.5C135.5 734.167 142.6 719.3 147 718.5C193 714.5 204 707 206.5 707C228.1 707.8 230.833 715.333 229.5 719L238.5 755L249.5 779L259.5 787C264.333 789.667 274.1 795 274.5 795C274.9 795 283 806.333 287 812L290.5 826C291.5 828 293.8 832.8 295 836C314.2 851.2 321.333 862 322.5 865.5C350.5 864.3 358.833 860.333 359.5 858.5C373.333 848.167 403.9 827.5 415.5 827.5C462.7 831.9 495.5 847 506 854H507.5C514.833 836.5 529.4 801.3 529 800.5C518.6 791.3 514 767.333 513 756.5L515.5 728C516.667 717.5 521.4 695.4 531 691C554.6 681.8 577.167 667.5 585.5 661.5L599.5 643L651 533.5L654 525L653.5 514.5L646.5 502.5C640.333 497.333 628 486.8 628 486C625.6 482 584 461 563.5 451C559.667 449.333 551.9 445.9 551.5 445.5C551.1 445.1 549.667 445.333 549 445.5C539.667 447.833 521 452.6 521 453C521 453.4 517 453.167 515 453C512.667 452.5 507.9 451.4 507.5 451C507.1 450.6 500 444.833 496.5 442L494.5 431L496.5 424.5L519.5 373L544 267V252.5C540.833 258.5 531.7 271.6 520.5 276C509.3 280.4 496.167 275.5 491 272.5H486.5L461.5 282L402.5 269L391 337L326 320C315.667 368.5 294.8 466 294 468Z" data-region="가흥2동" stroke="black" stroke-width="0.1"></path>
+<path class="clickable-region" d="M527 696.5C521.8 702.1 517.167 729.5 515.5 742.5L536 743C538 742.833 542.2 742.4 543 742C553.4 736 561.333 738.833 564 741L581.5 763L620.5 796L621 795C620.167 790.5 618.4 778.5 618 766.5C620.4 741.3 633.667 725.333 640 720.5V717.5C636.667 708.5 630 688.2 630 679C630 669.8 626 664.833 624 663.5L604.5 646C603.5 644.833 601.3 642.8 600.5 644C596.5 654 588 661 582 667.5C576 674 533.5 689.5 527 696.5Z" data-region="영주1동" stroke="black" stroke-width="0.1"></path>
+<path class="clickable-region" d="M516 766.5C517.2 778.5 525.833 793.167 530 799C530.333 799.167 531.2 799.5 532 799.5C549 798 570 823.5 577 833C578.2 842.2 580.5 842.833 581.5 842C581.833 836.667 585.2 823.6 596 814C609.5 802 626.5 801.5 619.5 797C583 768 572.5 753.5 567 747C561.4 736.6 548.667 740.333 543 743.5L515 745C514.833 747.167 514.8 754.5 516 766.5Z" data-region="영주2동" stroke="black" stroke-width="0.1"></path>
+<path class="clickable-region" d="M620 761.5C619 770 622.5 798.5 623 799C626.833 798.333 636.1 797.1 642.5 797.5C655.3 797.5 665.5 800.167 669 801.5C675 804 689.3 809.1 698.5 809.5C707.7 809.9 716.667 803.333 720 800C723.333 795.667 732.5 788 742.5 792C752.5 796 758.333 806.333 760 811C761.5 817.167 764.8 830.7 766 835.5C767.2 840.3 777.167 842.5 782 843C786 843.333 795.8 843.4 803 841C810.2 838.6 823.667 826.333 829.5 820.5C830.167 813.667 830.8 798 828 790C820.5 773.5 809.5 773 808 771.5C794.4 769.1 785 762.5 782 759.5H780.5L766 768C761.667 769.167 752 771.6 748 772C743 772.5 729 765.5 721 762C717 756.5 665.5 735.5 660 732.5C654.5 731 643 721 641.5 721.5C630.5 730 623.5 749.5 620 761.5Z" data-region="하망동" stroke="black" stroke-width="0.1"></path>
+<path class="clickable-region" d="M649 799.5C647.4 799.5 633.333 800.167 626.5 800.5V802L628 803.5L633.5 809L639.5 818.5L641.5 873C642.5 876.667 644.6 884.2 645 885C645.5 886 648 887 649 887.5C649.8 887.9 651.667 886.667 652.5 886L667 877.5L672 878.5L677 886L680 959L687 967.5L690 972.5L688.5 992.5C687.333 1000.5 685 1016.6 685 1017V1024L690.5 1028L698.5 1029L704.5 1025.5L713.5 1011.5L720 994L726 979L738.5 965.5L751.5 954.5L759 947.5L773 941L813.5 929.5L823 926L831 927.5L852.5 938L876 947L884 951.5L899 967.5L921.5 996L926 1009.5L932 1010.5L953 1009.5L977 1008.5L979 1007L995.5 991L1012.5 972.5L1026 950.5L1030 937.5V921.5L1029 905.5L1023 884.5C1021.5 882 1018.4 876.9 1018 876.5C1017.5 876 1015.5 869.5 1015 868.5C1014.5 867.5 1015.5 844.5 1015 843.5C1014.5 842.5 1014 830 1013 829C1012 828 1010 828.5 1009.5 828.5C1009.1 828.5 1005.33 829.5 1003.5 830C998.667 832.5 988.6 837.6 987 838C985 838.5 976.5 842 976 842.5C975.5 843 966.5 842.5 965 842.5C963.8 842.5 956.5 840.167 953 839C947.667 835.833 936.9 829.4 936.5 829C936 828.5 933 827 932.5 827H928L923 832L919 841C916 840.833 909.7 840.4 908.5 840C907 839.5 882 833 881.5 833C881 833 834.5 821 833.5 821C832.7 821 831.833 822 831.5 822.5L828 823L819 832L802 843L784.5 844.5C782.167 844.167 777.4 843.5 777 843.5C776.6 843.5 770.167 840.5 767 839L763.5 834L762.5 826.5C760.833 820.667 757.4 808.9 757 808.5C756.6 808.1 753.167 803.667 751.5 801.5C750.333 800.167 747.8 797.5 747 797.5C746 797.5 740.5 792.5 739 792.5C737.8 792.5 731.5 793.833 728.5 794.5C723.5 798.833 713.3 807.6 712.5 808C711.5 808.5 705 811.5 702.5 811.5C700.5 811.5 692.667 810.833 689 810.5L661 800.5C657.667 800.167 650.6 799.5 649 799.5Z" data-region="휴천1동" stroke="black" stroke-width="0.1"></path>
+<path class="clickable-region" d="M580 846L577.5 875.5L577 877L573 895.5L565.5 912.5L549 934L537 944L527 951.5L513 959L500.5 966L490 977L484 992.5C484 994 483.9 997.2 483.5 998C483.1 998.8 481.667 1000 481 1000.5L479.5 1004.5L480 1008L484 1012.5L504.5 1019.5L527 1030.5L535 1036.5L545.5 1048.5L552 1061L559.5 1077.5C560.833 1079.33 563.6 1083.1 564 1083.5C564.5 1084 570.5 1089 571.5 1089.5C572.3 1089.9 580.167 1093.67 584 1095.5L592 1099.5C593.167 1100.67 595.6 1103 596 1103C596.5 1103 596 1107.5 596 1108C596 1108.4 593.333 1113.5 592 1116L582 1123.5C580.333 1124.5 576.8 1126.6 576 1127C575 1127.5 569.5 1127.5 568.5 1127.5C567.5 1127.5 563 1127 561.5 1126.5C560.3 1126.1 553.667 1124.33 550.5 1123.5L546 1124L541 1129.5L534 1146L526.5 1162.5L520.5 1171L511.5 1178.5L491 1189.5L474.5 1201L465 1212.5L462.5 1212L443 1194.5L429 1169.5C428.333 1167.67 426.9 1163.7 426.5 1162.5C426 1161 426 1156 426 1154.5C426 1153 425.5 1147 425 1146C424.6 1145.2 422.167 1141.67 421 1140L413.5 1139L408 1141.5L379.5 1156L353 1166.5L334.5 1169H311L301.5 1167.5L296 1164C295.667 1163.17 294.9 1161.4 294.5 1161C294.1 1160.6 293.667 1156.5 293.5 1154.5L296.5 1143L320.5 1096L344 1043.5L360.5 993.5V977.5L358.5 970L347 952.5L335.5 920.5L329.5 905L322.5 869L323.5 867L344.5 866L358.5 862L400.5 833.5L413 830H421.5L456 836L479.5 843L506.5 856L508 855.5C514.167 841.5 526.6 813.4 527 813C527.4 812.6 530.833 804.833 532.5 801H534.5L541.5 803.5L556 812.5L571.5 828.5L580 846Z" data-region="가흥1동" stroke="black" stroke-width="0.1"></path>
+<path class="clickable-region" d="M490 979.5L485 999.5L486 1000.5H490C494.167 998.167 502.7 993.4 503.5 993C504.3 992.6 509.5 987.833 512 985.5H515L519 987L526 997.5L534 1006L542 1010C547.333 1011 558.3 1013 559.5 1013C560.7 1013 567.333 1012.67 570.5 1012.5H577C577.8 1012.5 583 1009.5 585.5 1008L597.5 997L604.5 989.5C606.333 988.333 610.1 985.9 610.5 985.5C611 985 613.5 985 614.5 985C615.5 985 618 986.5 619.5 987C620.7 987.4 625.667 989.833 628 991H631.5C632.3 991 636.833 986.333 639 984L648 972.5L651 959L650 947L646.5 933L633.5 907C631.167 902.5 626.4 893.3 626 892.5C625.5 891.5 623.5 885 623 884.5C622.5 884 619.5 878.5 619 878C618.5 877.5 611.5 874 611 873.5C610.6 873.1 604.833 869 602 867C599.667 864 594.9 857.9 594.5 857.5C594.1 857.1 586.333 849.667 582.5 846H581V863C580.667 866.833 579.9 874.6 579.5 875C579.1 875.4 576 889.167 574.5 896L568.5 910L556 928.5L547 938L524.5 955.5L499.5 969L490 979.5Z" data-region="휴천2동" stroke="black" stroke-width="0.1"></path>
+<path class="clickable-region" d="M617.5 874.5C619.833 877.667 624.6 884.1 625 884.5L625.5 886L627.5 893L629 897L638.5 915L648.5 934L650 938.5L651.5 951C651.667 954.333 652 961.1 652 961.5C652 961.9 650.667 968.667 650 972L636.5 989C634.833 989.833 631.4 991.6 631 992C630.5 992.5 625 990.5 623.5 990C622 989.5 616.5 986.5 615.5 986.5C614.5 986.5 611 987 609.5 987.5C608.3 987.9 603.333 993.333 601 996C593.167 1002.17 577.3 1014.6 576.5 1015C575.5 1015.5 569.5 1015 568 1014.5C566.5 1014 554.5 1013.5 554 1013.5C553.6 1013.5 541.5 1010.17 535.5 1008.5C532.167 1005.33 525.5 998.9 525.5 998.5C525.5 998 517 988.5 516.5 987.5C516 986.5 514 987.5 513.5 987.5C513 987.5 509.5 989.5 509 990C508.5 990.5 501.5 997.5 501 997.5C500.5 997.5 489.5 1001.5 487.5 1002C485.5 1002.5 482.5 1003.5 482 1004C481.5 1004.5 482 1006.5 482.5 1008C483 1009.5 485.5 1010.5 486 1011C486.4 1011.4 496.167 1014.83 501 1016.5C502.167 1016.83 504.7 1017.5 505.5 1017.5C506.5 1017.5 511.5 1020.5 512 1020.5C512.4 1020.5 528.5 1030.83 536.5 1036C538.333 1037.5 542.1 1040.6 542.5 1041C542.9 1041.4 546 1045.17 547.5 1047L558 1069C558.667 1071 560 1075.2 560 1076C560 1077 566.5 1083 566.5 1083.5C566.5 1083.9 572.833 1088 576 1090L586 1094C588 1095.17 592.1 1097.7 592.5 1098.5C593 1099.5 596.5 1102 597 1102C597.5 1102 598 1106.5 598 1107C598 1107.4 591.333 1116.5 588 1121C585.833 1122.5 581.1 1125.7 579.5 1126.5C577.5 1127.5 569 1128.5 568.5 1128.5C568.1 1128.5 556 1126.17 550 1125H548.5L543.5 1128L536 1146L523.5 1168.5L516 1176.5L491 1190.5L478.5 1199.5C476 1202.17 470.4 1208.1 468 1210.5C465.6 1212.9 466 1213.5 466.5 1213.5C475 1218 492.8 1228.5 496 1234.5C500 1242 499.5 1246 501.5 1256C503.1 1264 520.5 1271 529 1273.5V1275.5C529 1276 523 1285 523 1285.5V1297.5C523.5 1298.83 524.6 1301.7 525 1302.5C525.5 1303.5 530 1309 531 1309.5C532 1310 542.5 1318 543.5 1318.5C544.3 1318.9 544.833 1320.67 545 1321.5V1334C545.5 1341.33 546.9 1357.9 548.5 1365.5C550.1 1373.1 557.5 1378.67 561 1380.5C566.333 1380.67 578.2 1380.8 583 1380C587.8 1379.2 591.333 1373 592.5 1370C592.167 1363.17 590.9 1348 588.5 1342C585.5 1334.5 563.5 1301.5 563.5 1300.5C563.5 1299.7 563.167 1291.83 563 1288C566.667 1283.17 574.3 1273.1 575.5 1271.5C577 1269.5 585 1264 586.5 1263C587.7 1262.2 594.333 1259.33 597.5 1258C599.833 1257.5 605 1256.4 607 1256C609 1255.6 616.167 1255.83 619.5 1256L638 1252.5L657 1246.5C661.667 1244.17 671.3 1239.4 672.5 1239C674 1238.5 682.5 1228 683.5 1227C684.3 1226.2 686.833 1219.67 688 1216.5L690.5 1202L692 1187C691.5 1179.33 690.5 1163.8 690.5 1163C690.5 1162 688 1159 687.5 1157.5C687 1156 684 1151 684 1150.5C684 1150 668 1130 667 1128.5C666 1127 655.5 1117.5 653 1115.5C650.5 1113.5 647.5 1110 647 1108.5C646.6 1107.3 647.167 1106.33 647.5 1106C649.167 1105 652.7 1102.8 653.5 1102C654.3 1101.2 666.5 1097.33 672.5 1095.5C674 1095.33 677.3 1095 678.5 1095C680 1095 684 1098 684.5 1098.5C685 1099 688.5 1102.5 689 1103.5C689.4 1104.3 692.167 1106.5 693.5 1107.5L699.5 1104.5C701.333 1102.83 705.1 1099.5 705.5 1099.5C706 1099.5 707 1099 707.5 1099.5C707.9 1099.9 708.667 1101.33 709 1102C710.667 1105 714.1 1111.1 714.5 1111.5C714.9 1111.9 719.333 1119 721.5 1122.5L732 1133.5L738 1140L753 1149L771.5 1154C776 1154.67 785.1 1156 785.5 1156H799.5L814 1154L842.5 1146L869.5 1142C871.167 1141.83 875.6 1141.5 880 1141.5C885.5 1141.5 894 1140 894.5 1140C894.9 1140 904.667 1138 909.5 1137L934.5 1126.5L942.5 1122C954.167 1112.17 977.6 1092.5 978 1092.5C978.5 1092.5 988.5 1083.5 989.5 1082.5C990.5 1081.5 992.5 1078 993.5 1077C994.3 1076.2 997.5 1069.67 999 1066.5L1005 1045L1009.5 1025.5C1008.67 1024.5 1006.9 1022.4 1006.5 1022C1006 1021.5 1002.5 1020.5 999.5 1018.5C996.5 1016.5 979.5 1010 979 1010C978.6 1010 975.5 1009.67 974 1009.5L928 1011.5C927.333 1011.33 925.7 1010.8 924.5 1010C923 1009 923 1007 923 1006C923 1005.2 921.667 1000.33 921 998L909.5 982C902.5 974.333 888.4 958.8 888 958C887.6 957.2 884.833 954.333 883.5 953L835.5 931C832.5 930.167 826.4 928.5 826 928.5C825.6 928.5 822.833 927.833 821.5 927.5L791.5 937.5C789.667 938 785.9 939.1 785.5 939.5C785.1 939.9 772 944 765.5 946L747 960L735.5 970.5L728 980.5C725.833 984.667 721.4 993.2 721 994C720.5 995 714.5 1014 714 1015C713.6 1015.8 708.167 1023 705.5 1026.5L703 1029C702.6 1029.4 699.5 1029.83 698 1030C694.333 1029.33 686.9 1028 686.5 1028C686.1 1028 684.667 1026.33 684 1025.5V1022.5V1017C685.667 1005 689.1 980.8 689.5 980C689.9 979.2 689.667 976 689.5 974.5L687.5 970C685.167 967.333 680.4 961.8 680 961C679.6 960.2 678.5 959 678 958.5L677 922C676.5 912 675.5 891.9 675.5 891.5C675.5 891 675 886.5 675 885.5C675 884.5 672 880.5 671.5 880C671 879.5 668 878.5 667.5 878.5C667.1 878.5 665.667 879.167 665 879.5L655.5 886C654.333 886.667 651.7 888.1 650.5 888.5C649 889 646 888 646 887.5C646 887.1 642.667 884 641 882.5L639.5 850V835.5V827.5C639.5 826.7 638.167 821.5 637.5 819C636.667 816.833 634.8 812.3 634 811.5L627.5 805C626.3 803.8 623.667 802.167 622.5 801.5C621.5 801.667 619.3 802.1 618.5 802.5C617.7 802.9 611.167 805.667 608 807C604.5 809.5 597.3 814.6 596.5 815C595.7 815.4 590.5 822.5 588 826L583.5 837C583.167 838.167 582.5 840.8 582.5 842C582.5 843.2 583.5 844.833 584 845.5C585.167 846.667 587.6 849.2 588 850C588.5 851 594.5 855.5 595 856C595.5 856.5 606 867.5 606.5 868.5C606.9 869.3 614 872.833 617.5 874.5Z" data-region="휴천3동" stroke="black" stroke-width="0.1"></path>
+</svg>
+</div>
+</div>
+</div>
+<div class="region-label" id="regionLabel"></div>
+<script>
+  const label = document.getElementById('regionLabel');
+  const svgMap = document.querySelector('.gyeongbuk-map');
+const regionFiles = {
+  "영주1동": [
+    { name: "영주동", file: "youngju_youngju1_youngju.html" }
+  ],
+  "영주2동": [
+    { name: "영주동", file: "youngju_youngju1_youngju.html" },
+    { name: "가흥동", file: "youngju_gaheong1_gaheong.html" }
+  ],
+  "가흥1동": [
+    { name: "가흥동", file: "youngju_gaheong1_gaheong.html" },
+    { name: "문정동", file: "youngju_gaheong1_munjung.html" }
+  ],
+  "가흥2동": [
+    { name: "고현동", file: "youngju_gaheong2_gohyen.html" },
+    { name: "상줄동", file: "youngju_gaheong2_sangjul.html" },
+    { name: "아지동", file: "youngju_gaheong2_aji.html" },
+    { name: "창진동", file: "youngju_gaheong2_changjin.html" }
+  ],
+  "상망동": [
+    { name: "상망동", file: "youngju_sangmang_sangmang.html" },
+    { name: "조와동", file: "youngju_sangmang_jowha.html" },
+    { name: "하망동", file: "youngju_sangmang_hamang.html" }
+  ],
+  "하망동": [
+    { name: "하망동", file: "youngju_sangmang_hamang.html" }
+  ],
+  "휴천1동": [
+    { name: "휴천동", file: "youngju_hucheon.html" }
+  ],
+  "휴천2동": [
+    { name: "휴천동", file: "youngju_hucheon.html" },
+    { name: "조암동", file: "youngju_hucheon3_joam.html" }
+  ],
+  "휴천3동": [
+    { name: "휴천동", file: "youngju_hucheon.html" },
+    { name: "적서동", file: "youngju_hucheon3_jeokseo.html" },
+    { name: "조암동", file: "youngju_hucheon3_joam.html" }
+  ]
+};
+  function getRegionName(el) {
+    if (!el) return '';
+    return el.dataset.name || el.dataset.region || '';
+  }
+
+  function showLabel(text, x, y) {
+    if (!label || !text) return;
+    label.textContent = text;
+    label.style.left = x + 'px';
+    label.style.top = y + 'px';
+    label.style.display = 'block';
+  }
+
+  function hideLabel() {
+    if (!label) return;
+    label.style.display = 'none';
+  }
+
+  function clearActive() {
+    document.querySelectorAll('.clickable-region.is-active').forEach(el => {
+      el.classList.remove('is-active');
+    });
+  }
+function selectRegion(regionEl) {
+  const adminName = getRegionName(regionEl);
+  if (!adminName) return;
+
+  clearActive();
+  regionEl.classList.add('is-active');
+
+  const selector = document.getElementById('legal-dong-selector');
+  const btnContainer = document.getElementById('legal-dong-buttons');
+  const nameDisplay = document.getElementById('admin-name-display');
+
+  if (regionFiles[adminName]) {
+    nameDisplay.textContent = adminName;
+    btnContainer.innerHTML = ''; 
+
+    regionFiles[adminName].forEach(dong => {
+      const btn = document.createElement('button');
+      btn.innerText = dong.name;
+      const normalStyle = `
+    padding: 15px 25px;
+    border-radius: 18px;
+      border: none;
+      color: #fff;
+      background: linear-gradient(180deg, #6db785 0%, #3f8f5b 100%);
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    transform: translateY(0);
+  `;
+
+  const pressedStyle = `
+    transform: translateY(3px);
+    box-shadow: 0 2px 4px rgba(67, 233, 123, 0.4);
+  `;
+
+  btn.style.cssText = normalStyle;
+
+  btn.onmousedown = () => {
+    Object.assign(btn.style, { transform: "translateY(3px)", boxShadow: "0 2px 4px rgba(67, 233, 123, 0.4)" });
+  };
+
+  const restoreBtn = () => {
+    btn.style.transform = "translateY(0)";
+    btn.style.boxShadow = "0 6px 12px rgba(67, 233, 123, 0.3)";
+  };
+
+  btn.onmouseup = restoreBtn;
+  btn.onmouseleave = restoreBtn; 
+  btn.onclick = () => {
+    location.href = dong.file; 
+  };
+  
+  btnContainer.appendChild(btn);
+});
+
+    selector.style.display = 'block';
+  } else {
+    alert(adminName + " 페이지는 준비 중입니다! 🚧");
+  }
+}
+
+  if (svgMap) {
+    svgMap.addEventListener('mousemove', (e) => {
+      const region = e.target.closest('.clickable-region');
+      if (!region || !svgMap.contains(region)) {
+        hideLabel();
+        return;
+      }
+      showLabel(getRegionName(region), e.clientX, e.clientY);
+    });
+
+    svgMap.addEventListener('mouseleave', hideLabel);
+
+    svgMap.addEventListener('touchstart', (e) => {
+      const region = e.target.closest('.clickable-region');
+      if (!region || !svgMap.contains(region)) return;
+
+      const touch = e.touches[0];
+      if (touch) {
+        showLabel(getRegionName(region), touch.clientX, touch.clientY);
+      }
+    }, { passive: true });
+
+    svgMap.addEventListener('touchend', () => {
+      setTimeout(hideLabel, 500);
+    }, { passive: true });
+
+    svgMap.addEventListener('click', (e) => {
+      const region = e.target.closest('.clickable-region');
+      if (!region || !svgMap.contains(region)) return;
+      selectRegion(region);
+    });
+  }
+  const backBtn = document.getElementById('backBtn');
+
+if (backBtn) {
+  backBtn.addEventListener('click', () => {
+    history.back();
+  });
+}
+</script>
+</div><script src="/sound.js"></script>
+</body>
+</html>
