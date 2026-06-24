@@ -762,7 +762,7 @@ function loadPosts(collectionName = "recommendations", listId = "post-list", sor
       document.getElementById("display-nickname").innerText = `✍️ 작성자: ${currentNick}`;
     loadPosts("recommendations", "post-list", "createdAt");
     } else {
-      location.href = "start.html";
+      console.log("로그인이 필요합니다.");
     }
   });
 

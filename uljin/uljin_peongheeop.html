@@ -449,7 +449,7 @@ window.handleFileSelect = (e) => {
       document.getElementById("display-nickname").innerText = `✍️ 작성자: ${currentNick}`;
       loadPosts("createdAt");
     } else {
-      location.href = "start.html";
+      console.log("로그인이 필요합니다.");
     }
   });
 

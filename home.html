@@ -161,7 +161,7 @@
       const name = user.displayName || user.email.split('@')[0];
       showToast(`🌟 ${name}님, 반갑습니다!`);
     } else {
-      location.href = "start.html";
+      console.log("로그인이 필요합니다.");
     }
   });
 
@@ -180,7 +180,7 @@
   document.getElementById("logoutBtn").onclick = () => {
     signOut(auth).then(() => {
       alert("로그아웃 되었습니다.");
-      location.href = "start.html";
+      console.log("로그인이 필요합니다.");
     });
   };
 document.getElementById("infoBtn").onclick = () => {
