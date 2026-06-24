@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>영천시 동별 상세지도</title>
+<style>
+   
+   html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000; 
+}
+
+   .app-shell {
+  width: 100vw;
+  height: 100vh;
+  background: none;
+}
+
+   .app-stage {
+  position: relative;
+  width: 100vw;  
+  height: 100vh;
+  aspect-ratio: auto; 
+  background: transparent;
+  box-shadow: none;
+}
+
+    .map-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .video-dim {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.12);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .ui-layer {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+    }
+
+ .map-area {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: min(86%, 92vh);
+  aspect-ratio: 1440 / 1440;
+  transform: translate(-50%, -50%);
+  z-index: 12;
+}
+
+  .map-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; 
+}
+
+    .svg-overlay {
+      position: absolute;
+      inset: 0;
+      aspect-ratio: 1440 / 1440;
+      aspect-ratio: 1440 / 1440;
+      transform: translate(9.5%, -13%);
+      width: 50%;
+      height: 50%;
+      z-index: 2;
+    }
+
+   .gyeongbuk-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.gyeongbuk-map .clickable-region,
+.gyeongbuk-map path.clickable-region,
+.gyeongbuk-map polygon.clickable-region,
+.gyeongbuk-map rect.clickable-region,
+.gyeongbuk-map circle.clickable-region {
+  cursor: pointer;
+  pointer-events: visiblePainted;
+  fill: rgba(255, 255, 255, 0.001) !important;
+  stroke: rgba(255, 255, 255, 0.72) !important;
+  stroke-width: 2.2 !important;
+  vector-effect: non-scaling-stroke;
+  transition: fill 0.18s ease, filter 0.18s ease, opacity 0.18s ease;
+}
+
+.gyeongbuk-map .clickable-region:hover,
+.gyeongbuk-map path.clickable-region:hover,
+.gyeongbuk-map polygon.clickable-region:hover,
+.gyeongbuk-map rect.clickable-region:hover,
+.gyeongbuk-map circle.clickable-region:hover,
+.gyeongbuk-map .clickable-region.is-active,
+.gyeongbuk-map path.clickable-region.is-active,
+.gyeongbuk-map polygon.clickable-region.is-active,
+.gyeongbuk-map rect.clickable-region.is-active,
+.gyeongbuk-map circle.clickable-region.is-active {
+  fill: rgba(255, 193, 7, 0.38) !important;
+  filter: drop-shadow(0 0 6px rgba(255, 193, 7, 0.8));
+}
+
+    .region-label {
+      position: fixed;
+      z-index: 30;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.96);
+      color: #222;
+      font-size: 14px;
+      font-weight: 700;
+      pointer-events: none;
+      transform: translate(-50%, calc(-100% - 12px));
+      white-space: nowrap;
+      display: none;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    }
+
+
+    .base-video { z-index: 0; }
+    .overlay-container {
+      position: absolute;
+      top: -8%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 55%;
+      height: 45%;
+      z-index: 15;
+      pointer-events: none;
+    }
+    .overlay-video-canvas { width: 100%; height: 100%; display: block; }
+
+
+
+
+.page-title {
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 55;
+  margin: 0;
+  font-size: 66px;
+  font-weight: 900;
+  color: #111;
+  letter-spacing: -2px;
+  text-shadow:
+    -2px -2px 0 #fff,
+     2px -2px 0 #fff,
+    -2px  2px 0 #fff,
+     2px  2px 0 #fff,
+     0px  4px 10px rgba(0,0,0,0.18);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.back-btn {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 100;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px); 
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.back-btn:active {
+  transform: scale(0.9);
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: 60px; 
+  transform: translateX(-50%);
+  padding: 12px 28px;
+  font-size: 30px;
+  font-weight: 700;
+  color: white; 
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 50;
+  white-space: nowrap;
+  letter-spacing: -0.5px;
+}
+
+  </style>
+</head>
+<body>
+<div class="app-shell">
+<div class="app-stage">
+<video autoplay="" class="map-video base-video" loop="" muted="" playsinline="">
+<source src="/video/background.mp4" type="video/mp4"/>
+</video>
+<div class="video-dim"></div>
+<div class="ui-layer">
+<h1 class="page-title">영천시 동별 상세지도</h1>
+<div class="back-btn" onclick="setTimeout(() => location.href='/index.html', 200)">
+<svg fill="none" height="24" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24" width="24">
+<path d="M15 18l-6-6 6-6"></path>
+</svg>
+</div>
+<div class="hint">지도의 구역을 클릭하면 상세 정보를 볼 수 있습니다.</div>
+<div id="legal-dong-selector" style="display:none; position: fixed; bottom: 380px; left: 50%; transform: translateX(-50%); z-index: 100; background: rgba(255, 255, 255, 0.98); padding: 30px; border-radius: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); text-align: center; width: 90%; max-width: 550px; border: 1px solid rgba(255,255,255,0.3);">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <span style="font-size: 15px; color: #888; font-weight: 500;">탐구하고 싶은 동네를 선택해봅시다</span>
+    <button onclick="document.getElementById('legal-dong-selector').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color: #ccc;">✕</button>
+  </div>
+  <h2 id="admin-name-display" style="margin: 0 0 20px 0; color: #222; font-size: 28px; font-weight: 900;">행정동명</h2>
+  <div id="legal-dong-buttons" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; max-height: 300px; overflow-y: auto; padding: 10px;">
+    </div>
+</div>
+<div class="map-area">
+<img alt="영천시 동별 상세지도" class="map-bg" src="/images/youngcheon_detail.png"/>
+<svg class="gyeongbuk-map svg-overlay" fill="none" height="1085" preserveaspectratio="xMidYMid meet" viewbox="0 0 1440 1085" width="1440" xmlns="http://www.w3.org/2000/svg">
+<path class="clickable-region" d="M465 455.5L473.5 470L477 475L482 478.5L485.5 475C485.9 474.6 488 470.5 489 468.5L492.5 465.5H499C499.8 465.5 501.667 468.5 502.5 470L505 486.5L508 502L504 524.5C503 529.167 501.1 538.5 501.5 538.5C502 538.5 505.5 537.5 507 536.5C508.2 535.7 512.167 533.167 514 532L525.5 529.5L534.5 532.5L544.5 542.5L555.5 558L556.5 569L549 580.5L538.5 591.5L521 606.5L520.5 609.5L530 618L544.5 628L549 637L551.5 661L555 688H561C561.4 688 564.5 685.333 566 684L571.5 676L587 658.5L605 642.5L615 638.5C616.167 636.167 618.6 631.4 619 631C619.5 630.5 623 620 623 619V611.5C623 610.7 621 608.5 620 607.5L613 604.5L610.5 601.5C610.333 600 610.1 596.8 610.5 596C611 595 612 593.5 613 592.5C614 591.5 612 588.5 611.5 588C611 587.5 606.5 583 606 582C605.5 581 603 576 603 575C603 574.2 602.333 570.667 602 569L604 554L609 538.5L613 529C615 525.5 619 518.4 619 518V512C619 511.2 618 506.667 617.5 504.5C616.833 503 615.4 499.8 615 499C614.5 498 610 491.5 609 490L604 482.5C603.2 481.3 602.333 476.333 602 474L600.5 466L603.5 454.5L610 446C613 442.167 619.1 434.4 619.5 434C620 433.5 627 426.5 627.5 425.5C628 424.5 637 419 639 418C640.6 417.2 648.333 412.667 652 410.5C656.333 407.667 665.1 401.9 665.5 401.5C666 401 669.5 394 669.5 393.5V385C669.5 383.8 668.167 380.5 667.5 379L663.5 369C662.667 365.833 661 359.3 661 358.5C661 357.7 662.667 352.5 663.5 350C664.333 348.833 666.1 346.3 666.5 345.5C667 344.5 671.5 338.5 672.5 336C673.3 334 673.5 332.167 673.5 331.5L672.5 326.5C671.167 324.167 668.5 319.4 668.5 319C668.5 318.5 671.5 313 671.5 312C671.5 311 676 307 676 306.5V300.5L670.5 294C669.167 292 666.4 287.7 666 286.5C665.5 285 668.5 279 668.5 278C668.5 277.2 670.5 272.667 671.5 270.5L679.5 263.5C682.833 260.667 689.6 254.8 690 254C690.5 253 701.5 248 702.5 247C703.5 246 709.5 241.5 710 241C710.4 240.6 713.167 237.167 714.5 235.5L716 227L719.5 200L722 188.5L720.5 176L718 158.5V133C718 132 722 118.5 722.5 117.5C723 116.5 727 95 727 93V78.5C727 77.3 724.667 75.6667 723.5 75C719.333 73 710.6 68.8 709 68C707 67 697 66 695 66.5C693.4 66.9 689 67.6667 687 68C683 70.1667 674.8 74.6 674 75C673 75.5 661.5 79 661 78.5C660.5 78 654.5 76.5 653.5 76.5C652.7 76.5 649.833 77.1667 648.5 77.5L645.5 90.5L641 102L630 107L613.5 112L606 118.5L589 148C586.833 152.167 582.2 161 581 163C579.5 165.5 578.5 177.5 578 179C577.5 180.5 573.5 193 573 194C572.5 195 566 198.5 565.5 198.5C565 198.5 556.5 204.5 555 204.5C553.5 204.5 547.5 207.5 545.5 208C543.9 208.4 541.833 205.833 541 204.5C537.667 201.5 530.7 195.2 529.5 194C528.3 192.8 521.333 185.167 518 181.5L508.5 157.5L505 134.5L500 113.5L489 99.5C483.167 96 471.3 88.8 470.5 88C469.5 87 452 81 450.5 80C449 79 437 78.5 436 78.5C435.2 78.5 430 79.5 427.5 80L418 85.5L406 96L395.5 110.5C392.333 111.5 385.8 113.5 385 113.5H378.5L371 116L370.5 130L375 136V153C374.5 156.167 373.5 162.7 373.5 163.5C373.5 164.3 376.167 169.5 377.5 172L383.5 181.5C382.667 184.333 381 190.1 381 190.5C381 190.9 379.667 195.667 379 198L382 202.5L389.5 216L397 224.5L404.5 234.5C403.667 236 401.9 239.1 401.5 239.5C401.1 239.9 396.667 242.333 394.5 243.5V250C396.167 251.333 399.6 254.2 400 255C400.4 255.8 405.5 258 408 259L411.5 265C411.333 268.167 410.9 274.7 410.5 275.5C410.1 276.3 407.333 304.833 406 319L401.5 352L394.5 371L387.5 382.5C388 385.833 389 392.7 389 393.5C389 394.3 394.333 404.5 397 409.5C397.333 414.5 398 424.7 398 425.5C398 426.3 399.667 432.5 400.5 435.5C403.667 438 410.1 443.1 410.5 443.5C411 444 429.5 455.5 430.5 455.5C431.5 455.5 444.5 454 445.5 454C446.3 454 450.5 451.667 452.5 450.5H457.5L465 455.5Z" data-region="중앙동" stroke="black" stroke-width="0.1"></path>
+<path class="clickable-region" d="M642.5 642.5C643.5 642.5 677.5 641.5 678.5 641.5C680.5 641.833 684.6 642.5 685 642.5C685.5 642.5 690.5 645 691 645C691.4 645 695.5 648.667 697.5 650.5C701.667 654.167 710.1 661.6 710.5 662C710.9 662.4 717.667 667.167 721 669.5L742 680.5C746.833 681.833 756.9 684.6 758.5 685C760.1 685.4 766.167 683.833 769 683L792.5 674L804.5 666L815.5 651L819 638L817.5 628.5L813.5 618L809 612V598C807.667 593.333 805 583.8 805 583C805 582.2 807 571 808 565.5L816.5 547L825.5 536.5C832.5 532 846.5 522.9 846.5 522.5C846.5 522 853.5 515.5 853.5 515C853.5 514.6 857.167 508.5 859 505.5L867 478.5L872.5 458.5C872.333 453.5 871.9 443.3 871.5 442.5C871 441.5 868 432.5 868 432C868 431.6 866 431.167 865 431L853.5 441C850.167 443.5 843.3 448.6 842.5 449C841.5 449.5 830.5 460 829.5 460.5C828.5 461 824 463.5 823 464C822 464.5 815.5 463.5 814.5 463C813.5 462.5 808 459.5 806.5 459C805.3 458.6 803 459.5 802 460L794.5 466C793.333 469.5 790.8 476.7 790 477.5C789 478.5 781.5 482.5 780.5 482.5C779.5 482.5 775 484 773.5 484C772.3 484 771.333 482.667 771 482V469.5L770.5 446L766 432L754 405.5C753.833 401 753.5 391.9 753.5 391.5C753.5 391 757 385 757.5 384.5C757.9 384.1 762.333 377.667 764.5 374.5C765 372.5 766 368.4 766 368C766 367.6 764.667 364.833 764 363.5L756 352L744 336.5L742.5 323.5L738 307L731.5 290.5L727.5 279C727.167 273.167 726.5 261.3 726.5 260.5C726.5 259.7 721.833 249.167 719.5 244L713 241L707 245.5L692 256C688.333 258.833 680.8 264.6 680 265C679 265.5 673.5 271.5 673 272C672.5 272.5 669.5 282.5 669.5 284V290L674 294.5L677.5 299.5C678 301.333 679 305.1 679 305.5C679 306 677.5 310 676 311C674.5 312 673.5 314 673 315C672.6 315.8 672.5 319 672.5 320.5C673.333 322.167 675 325.6 675 326C675 326.5 676 331.5 676 332.5C676 333.5 674 339 674 339.5C674 339.9 669 348 666.5 352L664 360.5L667 370.5L671 381.5L672 396C670.5 398.5 667.4 403.6 667 404C666.5 404.5 658 410 657 410.5C656.2 410.9 649 414.667 645.5 416.5L628.5 427.5L618 438C615.167 442.5 609.4 451.7 609 452.5C608.5 453.5 605 460.5 605 461V474C605 474.8 608 481.333 609.5 484.5L616.5 495L622 508.5C622.333 511.5 622.9 517.6 622.5 518C622 518.5 620 527 619.5 528C619.1 528.8 615.667 535.333 614 538.5L610 549.5L606.5 564V571.5L608.5 577.5C610.5 579.833 614.6 584.7 615 585.5C615.5 586.5 616.5 590 616.5 591.5C616.5 593 615.5 596 615.5 596.5V601C615.5 601.5 619 603 620.5 604C621.7 604.8 624.667 607.333 626 608.5L627.5 613L626 625.5C624.833 628.5 622.3 634.7 621.5 635.5C620.5 636.5 622 638.5 622.5 639C623 639.5 627 640.5 627.5 641C628 641.5 641.5 642.5 642.5 642.5Z" data-region="동부동" stroke="black" stroke-width="0.1"></path>
+<path class="clickable-region" d="M573 695C573.8 695.4 579.333 699.5 582 701.5L583 704V707.5C583 708.3 579 712.5 577 714.5L571 723V731.5L574.5 739.5L580 750C584.167 755.167 592.7 765.8 593.5 767C594.5 768.5 604 774.5 605 775C606 775.5 617.5 773.5 618.5 773C619.3 772.6 624.833 768.5 627.5 766.5L643 761.5L650.5 759L656 760L664.5 761.5C666.5 761.833 670.6 762.4 671 762C671.4 761.6 675.167 760.5 677 760L685.5 761.5L692.5 766.5L700.5 776L710.5 786C710.9 786.4 718.667 789.167 722.5 790.5L737 787L744.5 779.5C749.833 775.5 760.6 767.5 761 767.5C761.5 767.5 781 757.5 781.5 757C781.9 756.6 790.667 753.5 795 752C797.5 750.5 802.7 747.3 803.5 746.5C804.5 745.5 809 738 809.5 737C809.9 736.2 813.667 733 815.5 731.5H825.5C828 731.5 840 729.5 841 728.5C842 727.5 850 722 851 721C851.8 720.2 853.333 714.333 854 711.5C856.5 708.333 861.6 701.9 862 701.5C862.4 701.1 869.833 693 873.5 689L877.5 682L874.5 676C871 672 864 663.9 864 663.5C864 663 861 653 860.5 651.5C860.1 650.3 856.333 646.333 854.5 644.5C850.5 643.5 842.2 641.5 841 641.5H827.5C826.5 641.5 820 645.5 819.5 646C819.1 646.4 811.667 659.5 808 666L789 678L769 685.5L756 687L744 684.5L729.5 677.5L717.5 670.5L701.5 657.5C698 654.833 690.8 649.4 690 649C689 648.5 682.5 644.5 681.5 644.5C680.7 644.5 674.833 644.833 672 645H652H642.5C641 645 632 644 628.5 643.5C625 643 621 641.5 619.5 641C618.3 640.6 616 640.833 615 641L604.5 647L591.5 658C587.5 662.5 579.3 671.6 578.5 672C577.5 672.5 569.5 682 567.5 683.5C565.5 685 567 689 567.5 690C568 691 572 694.5 573 695Z" data-region="완산동" stroke="black" stroke-width="0.1"></path>
+<path class="clickable-region" d="M501.5 746L496 762V766.5L494 775.5L500 803C499.667 808 499 818.1 499 818.5C499 818.9 502.667 837.667 504.5 847L502 876C502.167 895.667 502.4 935.3 502 936.5C501.6 937.7 510.167 951.333 514.5 958C519 964.333 528.3 977.6 529.5 980C531 983 535 991 535 992C535 993 529.5 1010 529.5 1011C529.5 1012 524 1029 522.5 1033C521 1037 522 1039.5 522.5 1042.5C523 1045.5 527.5 1042.5 530 1042.5C532.5 1042.5 544.5 1040.5 545.5 1039.5C546.5 1038.5 552 1036.5 552.5 1035.5C553 1034.5 557 1028 557.5 1026C558 1024 561.5 1016.5 562.5 1015C563.3 1013.8 565.167 1011.83 566 1011H573.5C574 1011 589.5 1017 592 1018C594 1018.8 603.833 1023.67 608.5 1026L623.5 1028C626.333 1026.67 632.4 1023.8 634 1023C636 1022 644.5 1018.5 646 1018C647.2 1017.6 652.167 1016.83 654.5 1016.5C660.333 1019.17 672.1 1024.6 672.5 1025C672.9 1025.4 680.667 1036.17 684.5 1041.5L687.5 1064.5C687.667 1069 687.9 1078.3 687.5 1079.5C687.1 1080.7 684.667 1085.67 683.5 1088L681 1098.5L679.5 1134.5V1161C680.667 1163.67 683.1 1169.1 683.5 1169.5C683.9 1169.9 688.667 1172 691 1173L695 1176.5C696.167 1180.5 698.5 1188.6 698.5 1189C698.5 1189.5 695.5 1199 695 1200.5C694.5 1202 693.5 1215 693.5 1215.5C693.5 1216 689 1224 688.5 1224.5C688.1 1224.9 681 1230.33 677.5 1233L659.5 1275L655.5 1303C655.833 1309.67 656.5 1323.1 656.5 1323.5C656.5 1323.9 661.5 1329.67 664 1332.5L673.5 1351C676.833 1358.67 683.5 1374.1 683.5 1374.5C683.5 1374.9 693.167 1378.67 698 1380.5L714.5 1383C722.167 1381.67 737.7 1378.9 738.5 1378.5C739.3 1378.1 757.5 1371.67 766.5 1368.5C773.833 1366.33 789.2 1361.8 792 1361C795.5 1360 805.5 1362 808.5 1362C811.5 1362 826 1365 831.5 1366C837 1367 839.5 1365 840.5 1365C841.3 1365 843.833 1361.33 845 1359.5L859.5 1339.5C863.333 1335.83 871.2 1328.4 872 1328C872.8 1327.6 875 1321.5 876 1318.5V1295.5C876 1293.5 872.5 1286 871 1283.5C869.5 1281 866 1276.5 865.5 1274C865 1271.5 865.5 1266 865.5 1264.5C865.5 1263.3 865.833 1257 866 1254C864.5 1251.67 861.4 1246.9 861 1246.5L854.5 1240L843.5 1236.5L834.5 1229L822.5 1205.5L818.5 1188L819.5 1163.5L833 1127.5L838 1102.5V1065.5V1055L845.5 1026C846.333 1019.83 848 1007.3 848 1006.5C848 1005.5 846 991.5 845.5 990C845.1 988.8 841.333 983.5 839.5 981L827 962.5C826 958.167 823.9 949.3 823.5 948.5C823 947.5 819 942 819 941.5C819 941 807 937.5 805.5 937C804 936.5 791.5 933.5 787.5 932.5C783.5 931.5 779 925.5 777.5 924C776.3 922.8 774.333 917.833 773.5 915.5L770.5 899C769 895.333 765.9 887.7 765.5 886.5C765.1 885.3 767.667 882.667 769 881.5L783 882.5C785.167 883 789.9 883.9 791.5 883.5C793.5 883 801 878 802 877.5C803 877 812 876.5 813.5 876.5C815 876.5 822 875.5 822.5 874.5C823 873.5 824 871 825 869C826 867 828.5 864.5 829 864C829.4 863.6 833.5 861.167 835.5 860L851 849.5L858.5 838.5C860.833 837.333 865.8 834.8 867 834C868.5 833 874 832.5 875 832.5C876 832.5 884 834.5 885.5 835C887 835.5 895.5 838 898 838.5C900 838.9 903.833 840.333 905.5 841L921 846C921.333 844.667 921.9 841.8 921.5 841C921 840 920.5 834.5 919.5 832.5C918.5 830.5 917 824 917 823.5C917 823.1 918 817.333 918.5 814.5L928 797L936.5 785L944.5 770.5C944.333 766.5 944 758.3 944 757.5C944 756.7 943.333 752.5 943 750.5C943 747.833 942.8 741.9 942 739.5C941 736.5 940 733 939 732C938 731 936 729.5 935.5 729.5H927C924 730 917.9 731 917.5 731C917.1 731 913.333 730.667 911.5 730.5C910.167 729.167 907.4 726.3 907 725.5C906.5 724.5 904.5 719 902.5 716C900.5 713 901 707 901 706.5C901 706 895 691.5 894 690C893 688.5 887 685.5 886.5 685.5C886.1 685.5 882 684.167 880 683.5L870 694.5C867.167 698.167 861.3 705.7 860.5 706.5C859.7 707.3 857.167 711.5 856 713.5C854.667 716.833 851.7 723.7 850.5 724.5C849.3 725.3 844.667 728.167 842.5 729.5L824.5 733C822.667 733.167 818.7 733.6 817.5 734C816.3 734.4 812.333 737.167 810.5 738.5C808.667 741.667 804.9 748.1 804.5 748.5C804.1 748.9 800.333 751 798.5 752L782 758.5L769.5 765L755.5 774C750.833 778 741.2 786 740 786C738.8 786 730.833 790 727 792C724.5 791.5 719.2 790.5 718 790.5C716.5 790.5 710.5 787.5 708.5 786C706.5 784.5 701.5 780 698.5 777C695.5 774 693 769.5 691.5 768.5C690 767.5 685.5 763.5 684 762.5C682.5 761.5 678.5 762.5 677 762.5C675.5 762.5 671 764.5 670 764.5C669 764.5 665 764 664 763.5C663.2 763.1 659 762 657 761.5H649L634.5 765.5L623 772.5L611.5 777C608.833 776.5 603.2 775.5 602 775.5C600.5 775.5 594 771.5 593.5 771C593 770.5 586 760 585.5 759.5C585.1 759.1 581.667 754 580 751.5L574 741.5C572.667 738.833 569.9 733.2 569.5 732C569.1 730.8 569 726.833 569 725L573 717C575.333 713.5 580 706.4 580 706V703L567 694C563.167 693 555.3 691.1 554.5 691.5C553.7 691.9 549.5 694.333 547.5 695.5C543.167 698.333 534.4 704.1 534 704.5C533.6 704.9 525.833 709 522 711L513 725L501.5 746Z" data-region="남부동" stroke="black" stroke-width="0.1"></path>
+<path class="clickable-region" d="M475 819C473 820.6 467.833 824 465.5 825.5H463C461 824.167 456.7 821.1 455.5 819.5C454 817.5 448 812.5 444.5 809.5C441 806.5 435 802 434 801C433 800 424.5 798.5 422 798.5H408.5C407.3 798.5 400.333 795.5 397 794C396.167 791.833 394.5 787.3 394.5 786.5C394.5 785.5 391 780.5 390 778.5C389 776.5 383 776 382 776H370.5C367 776 367 771.5 366.5 769C366 766.5 365 755.5 364.5 753.5C364 751.5 360 740.5 359 740C358 739.5 353 717.5 352.5 716.5C352 715.5 344 703.5 342 702C340 700.5 333.5 691 331.5 689.5C329.5 688 324.5 685 319 682.5C313.5 680 309.5 674.5 308 673.5C306.5 672.5 297.5 671.5 293.5 671.5C289.5 671.5 283 670.5 279.5 671.5C276 672.5 274 675.5 273 675.5C272 675.5 263.5 680.5 262 680.5H254.5H243C239.5 680.5 233 677 230 675.5L220 670.5C217 669 214.5 669.5 210 669.5C205.5 669.5 195 670.5 193 670.5C191.4 670.5 186 672.5 183.5 673.5C180.833 674.167 174.8 675.5 172 675.5C168.5 675.5 167.5 674.5 166.5 673.5C165.5 672.5 156.5 671 154 669.5C151.5 668 147.5 668.5 144.5 668.5C142.1 668.5 138.833 667.167 137.5 666.5C136.833 664 135.5 658.7 135.5 657.5C135.5 656 135 648.5 135.5 646C136 643.5 137.5 634.5 137.5 632V623C137.5 621 136 618 135 613.5C134 609 135 607 135 604.5C135 602.5 136.667 601.667 137.5 601.5L144 603C147 603.167 153.2 603.4 154 603C154.8 602.6 160.667 601.833 163.5 601.5C165.333 598.5 169.2 592.1 170 590.5C171 588.5 173.5 575.5 173.5 572.5C173.5 569.5 174.5 554 174.5 546V537C174.5 534 178.5 531 179 529.5C179.5 528 183 526 184 526C185 526 189 524 192 522C195 520 197.5 518 199 518C200.2 518 205.167 519 207.5 519.5C211.167 519.833 218.8 520.5 220 520.5C221.5 520.5 224 518 226.5 516C229 514 232 514 233 514C234 514 242.5 517.5 243 518C243.4 518.4 248.167 523.5 250.5 526C253.833 525.667 260.8 525 262 525H270.5L283 531C286 532.5 292.2 535.5 293 535.5C294 535.5 298.5 532 299.5 531C300.3 530.2 303.833 526 305.5 524C308 522.833 313.3 520.3 314.5 519.5C315.7 518.7 318.667 514.167 320 512L324 500L334.5 489.5C337.333 485.167 343.1 476.3 343.5 475.5C344 474.5 352 468.5 352.5 468.5C353 468.5 366 464 366.5 464C367 464 383 453.5 384 452.5C384.8 451.7 388.333 443.5 390 439.5C392.333 438.833 397.3 437.5 398.5 437.5C399.7 437.5 402.333 438.833 403.5 439.5C405.167 440.833 408.6 443.6 409 444C409.4 444.4 413.167 448.833 415 451L432 458.5C434.333 458.667 439.5 458.9 441.5 458.5C444 458 448.5 454 450 452.5C451.2 451.3 454.833 452 456.5 452.5L463 455.5L467.5 465L478 478C479.333 478.667 482.3 480 483.5 480C485 480 488 476.5 488.5 475.5L492 468.5C493.667 467.833 497.1 466.5 497.5 466.5C497.9 466.5 500.333 470.167 501.5 472L505.5 507.5L498.5 537.5L501.5 540.5L506 539.5L516 534L523.5 531.5L535.5 535L549 553L555 564.5C553.333 568.333 549.8 576.2 549 577C548 578 532 594.5 530.5 595C529 595.5 518 607 518 607.5C518 607.9 519.333 611 520 612.5L529 620.5L542 629L547 639.5L551 678C551 682 550.8 690.2 550 691C549 692 539.5 698 538 698.5C536.8 698.9 524.833 707 519 711L508 727L494.5 757.5L492 771.5L494.5 783C495.833 788.167 498.5 798.8 498.5 800C498.5 801.5 498 811 497.5 812C497 813 493 814 492 815C491 816 485.5 815 484 815C482.5 815 477.5 817 475 819Z" data-region="서부동" stroke="black" stroke-width="0.1"></path></svg>
+</div>
+</div>
+</div>
+<div class="region-label" id="regionLabel"></div>
+<script>
+  const label = document.getElementById('regionLabel');
+  const svgMap = document.querySelector('.gyeongbuk-map');
+const regionFiles = {
+  "동부동": [
+    { name: "조교동", file: "youngcheon_dongbu_jogyo.html" },
+    { name: "망정동", file: "youngcheon_dongbu_mangjeong.html" },
+    { name: "야사동", file: "youngcheon_dongbu_yasa.html" },
+    { name: "언하동", file: "youngcheon_dongbu_eonha.html" },
+    { name: "신기동", file: "youngcheon_dongbu_singi.html" }
+  ],
+  "중앙동": [
+    { name: "문외동", file: "youngcheon_jungang_muneo.html" },
+    { name: "문내동", file: "youngcheon_jungang_munnae" },
+    { name: "창구동", file: "youngcheon_jungang_changgu.html" },
+    { name: "과전동", file: "youngcheon_jungang_gwajeon.html" },
+    { name: "오미동", file: "youngcheon_jungang_omi.html" },
+    { name: "녹전동", file: "youngcheon_jungang_nokjeon.html" },
+    { name: "도림동", file: "youngcheon_jungang_dorim.html" },
+    { name: "매산동", file: "youngcheon_jungang_maesan.html" }
+  ],
+  "서부동": [
+    { name: "교촌동", file: "youngcheon_seobu_gyochon.html" },
+    { name: "성내동", file: "youngcheon_seobu_seongnae.html" },
+    { name: "화룡동", file: "youngcheon_seobu_hwaryong.html" },
+    { name: "오수동", file: "youngcheon_seobu_osu.html" },
+    { name: "쌍계동", file: "youngcheon_seobu_ssanggae.html" },
+    { name: "대전동", file: "youngcheon_seobu_daejeon.html" },
+    { name: "서산동", file: "youngcheon_seobu_seosan.html" }
+  ],
+  "완산동": [
+    { name: "완산동", file: "youngcheon_whansan_whansan.html" }
+  ],
+ 
+  "남부동": [
+    { name: "도동", file: "youngcheon_nambu_do.html" },
+    { name: "금노동", file: "youngcheon_nambu_geumno.html" },
+    { name: "범어동", file: "youngcheon_nambu_beomeo.html" },
+    { name: "작산동", file: "youngcheon_nambu_jaksan.html" },
+    { name: "봉동", file: "youngcheon_nambu_bong.html" },
+    { name: "도남동", file: "youngcheon_nambu_donam.html" },
+    { name: "본촌동", file: "youngcheon_nambu_bonchon.html" },
+    { name: "채신동", file: "youngcheon_nambu_chaesin.html" },
+    { name: "괴연동", file: "youngcheon_nambu_geoyeon.html" }
+  ]
+};
+  function getRegionName(el) {
+    if (!el) return '';
+    return el.dataset.name || el.dataset.region || '';
+  }
+
+  function showLabel(text, x, y) {
+    if (!label || !text) return;
+    label.textContent = text;
+    label.style.left = x + 'px';
+    label.style.top = y + 'px';
+    label.style.display = 'block';
+  }
+
+  function hideLabel() {
+    if (!label) return;
+    label.style.display = 'none';
+  }
+
+  function clearActive() {
+    document.querySelectorAll('.clickable-region.is-active').forEach(el => {
+      el.classList.remove('is-active');
+    });
+  }
+function selectRegion(regionEl) {
+  const adminName = getRegionName(regionEl);
+  if (!adminName) return;
+
+  clearActive();
+  regionEl.classList.add('is-active');
+
+  const selector = document.getElementById('legal-dong-selector');
+  const btnContainer = document.getElementById('legal-dong-buttons');
+  const nameDisplay = document.getElementById('admin-name-display');
+
+  if (regionFiles[adminName]) {
+    nameDisplay.textContent = adminName;
+    btnContainer.innerHTML = ''; 
+
+    regionFiles[adminName].forEach(dong => {
+      const btn = document.createElement('button');
+      btn.innerText = dong.name;
+      const normalStyle = `
+    padding: 15px 25px;
+    border-radius: 18px;
+      border: none;
+      color: #fff;
+      background: linear-gradient(180deg, #6db785 0%, #3f8f5b 100%);
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    transform: translateY(0);
+  `;
+
+  const pressedStyle = `
+    transform: translateY(3px);
+    box-shadow: 0 2px 4px rgba(67, 233, 123, 0.4);
+  `;
+
+  btn.style.cssText = normalStyle;
+
+  btn.onmousedown = () => {
+    Object.assign(btn.style, { transform: "translateY(3px)", boxShadow: "0 2px 4px rgba(67, 233, 123, 0.4)" });
+  };
+
+  const restoreBtn = () => {
+    btn.style.transform = "translateY(0)";
+    btn.style.boxShadow = "0 6px 12px rgba(67, 233, 123, 0.3)";
+  };
+
+  btn.onmouseup = restoreBtn;
+  btn.onmouseleave = restoreBtn; 
+  btn.onclick = () => {
+    location.href = dong.file; 
+  };
+  
+  btnContainer.appendChild(btn);
+});
+
+    selector.style.display = 'block';
+  } else {
+    alert(adminName + " 페이지는 준비 중입니다! 🚧");
+  }
+}
+
+  if (svgMap) {
+    svgMap.addEventListener('mousemove', (e) => {
+      const region = e.target.closest('.clickable-region');
+      if (!region || !svgMap.contains(region)) {
+        hideLabel();
+        return;
+      }
+      showLabel(getRegionName(region), e.clientX, e.clientY);
+    });
+
+    svgMap.addEventListener('mouseleave', hideLabel);
+
+    svgMap.addEventListener('touchstart', (e) => {
+      const region = e.target.closest('.clickable-region');
+      if (!region || !svgMap.contains(region)) return;
+
+      const touch = e.touches[0];
+      if (touch) {
+        showLabel(getRegionName(region), touch.clientX, touch.clientY);
+      }
+    }, { passive: true });
+
+    svgMap.addEventListener('touchend', () => {
+      setTimeout(hideLabel, 500);
+    }, { passive: true });
+
+    svgMap.addEventListener('click', (e) => {
+      const region = e.target.closest('.clickable-region');
+      if (!region || !svgMap.contains(region)) return;
+      selectRegion(region);
+    });
+  }
+  const backBtn = document.getElementById('backBtn');
+
+if (backBtn) {
+  backBtn.addEventListener('click', () => {
+    history.back();
+  });
+}
+</script>
+</div><script src="/sound.js"></script>
+</body>
+</html>
