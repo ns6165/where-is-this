@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>경북 지리 탐험 게임</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; }
+    #map { width: 100vw; height: 100dvh; }
+    .ui-overlay {
+      position: absolute; 
+      top: 20px; 
+      left: 20px; 
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9); 
+      padding: 20px; 
+      border-radius: 15px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
+      width: 280px;
+    }
+
+button { 
+    padding: 12px; cursor: pointer; border: none; border-radius: 8px;
+    background: #e0e0e0; transition: transform 0.1s, background 0.2s;
+  }
+
+  button:active { transform: scale(0.98);}
+  
+  #cover {
+  position: fixed; 
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.menu-wrap {
+  display: flex;
+ flex-direction: row;      
+  justify-content: center;  
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+#cover button {
+  width: 200px; height: 80px;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; 
+  touch-action: none; 
+}
+
+#map {
+  width: 100vw;
+  height: 100vh; 
+  height: 100dvh;
+}
+#score-board {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.7);
+  color: #00ff00; 
+  padding: 15px 25px;
+  border-radius: 50px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  pointer-events: none; 
+}
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.score-updated {
+  animation: pulse 0.3s;
+}
+.menu-card {
+  width: min(90vw, 38rem); 
+  padding: 2rem; 
+  border-radius: 1.5rem;
+  background: rgba(248, 255, 250, 0.9);
+  box-shadow: 0 1rem 2rem rgba(34, 94, 54, 0.15);
+  backdrop-filter: blur(10px);
+    
+}
+.menu-title { 
+  text-align: center; 
+  font-size: 1.3rem; 
+  font-weight: 800; 
+  color: #2f4f38; 
+  margin-bottom: 1rem; }
+
+.menu-btn { 
+  width: 100%; 
+  height: 3.5rem; 
+  border-radius: 0.8rem; 
+  border: none; 
+  color: #fff; 
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem; 
+  cursor: pointer;
+  background: linear-gradient(180deg, #6db785 0%, #3f8f5b 100%);
+  display: flex; 
+  justify-content: center;
+  align-items: center;
+}
+    
+.logout-btn { 
+   width: 100%; 
+  height: 3.5rem; 
+  border-radius: 0.8rem; 
+  font-weight: 700;
+  font-size: 1.1rem; 
+  margin-bottom: 0.5rem; 
+  cursor: pointer;
+  color: #3f8f5b;
+  border: 0.12rem solid #9fd3ad;
+  box-shadow: 0 0.45rem 1rem rgba(63, 143, 91, 0.08);
+  background: rgba(255, 255, 255, 0.95);
+  display: flex; 
+  justify-content: center;
+  align-items: center;
+  }
+
+    #answer {
+    width: 100%; height: 50px; padding: 10px; font-size: 1.3rem;
+    box-sizing: border-box; margin-bottom: 10px; border: 2px solid #ccc; border-radius: 8px;
+  }
+
+  .ui-overlay button { width: 100%; margin-bottom: 8px; font-weight: bold; }
+
+#resultModal .menu-card {
+  text-align: center;
+}
+#resultModal table, #rankingModal table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #2f4f38;
+  margin-top: 10px;
+}
+#resultModal th, #rankingModal th {
+  padding: 8px;
+  background-color: #f0fdf4;
+}
+#resultModal td, #rankingModal td {
+  text-align: center;
+  padding: 8px;
+  font-size: 1.3rem;
+}
+
+  </style>
+</head>
+<body>
+  <div id="resultModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.8); justify-content:center; align-items:center;">
+  <div class="menu-card">
+    <div class="menu-title">탐험 완료!</div>
+    <div style="font-size: 2rem; font-weight: 800; color: #3f8f5b; margin: 20px 0;" id="final-score">0점</div>
+    <div style="margin-bottom: 25px; font-size: 1.2rem; color: #2f4f38;" id="player-rank">랭킹 계산 중...</div>
+   <button class="menu-btn" onclick="setTimeout(() => location.reload(), 200)">다시 하기</button>
+<button class="logout-btn" onclick="setTimeout(() => location.href='test.html', 200)">메인 메뉴</button>
+  </div>
+</div>
+ <div id="score-board" style="background: #ff4500; color: white; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 10px; font-size: 1.2rem; font-weight: bold;">
+    점수: 200점
+  </div>
+
+<div class="ui-overlay">
+ 
+  <h3 id="status">게임 시작을 눌러주세요!</h3>
+  <div id="timer" style="font-size: 20px; font-weight: bold; color: #ff4500; margin-bottom: 10px;">0.0초</div>
+  <input type="text" id="answer" placeholder="지역명을 입력하세요">
+  <button onclick="checkAnswer()">정답 확인</button>
+    <hr>
+  <button onclick="zoomOut()">힌트 1: 지형 줌아웃 (-10점)</button>
+  <button onclick="showTextHint()">힌트 2: 지역 설명 (-10점)</button>
+  <div id="hint-display" style="margin-top:10px; padding:10px; background:#fff3cd; border:1px solid #ffeeba; border-radius:8px; min-height:40px;">여기에 힌트가 나타납니다.</div>
+<button onclick="stopGameBgm(); setTimeout(() => location.replace('test.html'), 200)" style="background: #6c757d; color: white;">메인 로비로 돌아가기</button></div>
+
+<div id="cover">
+  <div class="menu-card">
+    <div class="menu-title">경북 지리 탐험</div>
+    <div class="menu-wrap">
+      <button class="menu-btn" onclick="hideCover()">게임 시작</button>
+      <button class="menu-btn" onclick="showHelp()" >게임 설명</button>
+      <button class="logout-btn" onclick="showRanking()">랭킹 보기</button>
+    </div>
+  </div>
+</div>
+  
+<div id="rankingModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+  <div class="menu-card" >
+    <div class="menu-title">실시간 TOP 5 랭킹</div>
+    <div id="ranking-list" style="margin: 20px 0; font-size: 1.5rem; color: #2f4f38;"></div>
+    <button class="menu-btn" onclick="document.getElementById('rankingModal').style.display='none'">닫기</button>
+  </div>
+</div>
+<div id="helpModal" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; backdrop-filter: blur(5px);">
+<div class="menu-card" >
+      <div class="menu-title" style="text-align: center; font-size: 1.6rem; margin-bottom: 1.5rem;">🧭 게임 방법</div>
+    <div style="font-size: 1.1rem; color: #2f4f38; line-height: 1.8; margin-bottom: 2rem;">
+      <p>1️⃣ 무작위로 선택된 <b>경북의 지역</b>을 맞히세요.</p>
+      <p>2️⃣ 시간이 흐를수록 <b>점수가 하락</b>하고 <b>지도가 줌아웃</b>됩니다.</p>
+      <p>3️⃣ 힌트를 쓸 때마다 <b>점수가 차감</b>되니 주의하세요!</p>
+      <p>4️⃣ 총 <b>5문제</b>를 모두 맞히면 랭킹에 등록됩니다.</p>
+    </div>
+<div class="menu-wrap" style="margin-top: 20px;">
+  <button class="menu-btn" onclick="document.getElementById('helpModal').style.display='none'">이해했습니다!</button>
+</div>  </div>
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+<script>
+const gyeongbukBounds = L.latLngBounds([35.3, 127.8], [37.4, 129.5]);
+
+const gyeongbukRegions = [
+ { file: "andong", name: "안동시", lat: 36.561, lng: 128.729, hints: ["한국 정신문화의 수도라 불립니다.", "낙동강이 휘감아 도는 '물돌이' 마을인 하회마을이 있습니다.", "퇴계 이황의 학문적 발자취가 남은 도산서원이 있습니다.", "'간고등어'가 별미입니다.", "찜닭이 전국적으로 유명한 요리입니다.", "탈춤 축제로 전 세계 관광객이 모입니다.", "월영교의 야경은 여행의 필수 코스입니다.", "병산서원은 한국 건축미의 정수로 꼽힙니다.", "지역 면적이 서울보다도 큽니다.", "소주로 널리 알려진 고장입니다."] },
+  { file: "bonghwa", name: "봉화군", lat: 36.887, lng: 128.730, hints: ["백두대간의 험준한 산세에 안긴 고장입니다.", "대한민국에서 송이가 가장 많이 나는 곳 중 하나입니다.", "닭실마을은 조선 시대 은거지의 미학을 보여줍니다.", "여름에는 은어 축제가 열려 활기가 넘칩니다.", "산타마을로 꾸며진 분천역은 관광 명소입니다.", "오지 철도인 영동선이 지나갑니다.", "청량산의 암봉들은 절경을 자랑합니다.", "국립 백두대간 수목원이 위치해 있습니다.", "사과 재배지로도 유명하여 당도가 매우 높습니다.", "낙동강 상류의 맑은 물이 흐르는 지역입니다."] },
+  { file: "cheongdo", name: "청도군", lat: 35.647, lng: 128.746, hints: ["소싸움 축제가 열립니다.", "반시(감)가 전국적으로 유명하며 당도가 높습니다.", "운문사는 거대한 숲과 사찰이 어우러진 명소입니다.", "폐터널을 개조한 와인 터널이 여행객을 맞이합니다.", "미나리와 삼겹살을 함께 먹는 것이 별미입니다.", "새마을 운동이 처음 시작된 발상지입니다.", "군불로 찜질방 등 힐링 테마가 많습니다.", "대구와 인접하여 접근성이 매우 좋습니다.", "화양읍 일대에 감나무가 끝없이 펼쳐져 있습니다.", "소싸움 경기장은 랜드마크입니다."] },
+  { file: "chilgok", name: "칠곡군", lat: 35.996, lng: 128.398, hints: ["낙동강 방어선을 지켜낸 호국의 고장입니다.", "다부동 전적기념관이 역사의 현장을 증명합니다.", "낙동강의 수려한 풍경을 감상할 수 있는 거대한 보가 설치되어 있습니다.", "왜관 철교는 한국전쟁의 비극과 희망을 모두 간직했습니다.", "꿀벌 나라 테마파크가 있어 가족 여행지로 좋습니다.", "가산산성은 험준한 산세에 쌓은 요새입니다.", "낙동강변 수변 공원은 산책하기에 최적입니다.", "대구의 북쪽 이웃으로 공단이 밀집해 있습니다.", "교육과 문화가 공존하는 복합 도시입니다.", "낙동강 평화문화 대축전이 매년 열립니다."] },
+  { file: "chungsong", name: "청송군", lat: 36.435, lng: 129.056, hints: ["유네스코가 인정한 세계지질공원입니다.", "사과가 아삭하고 꿀이 들어간 듯 달콤합니다.", "조선 시대 명약수로 알려진 달기약수가 있습니다.", "얼음골은 여름에도 서늘한 바람이 부는 명소입니다.", "백자는 투박하지만 기품 있는 도자기입니다.", "주왕산은 암봉과 폭포가 어우러진 국립공원입니다.", "주산지의 물안개는 사진작가들의 성지입니다.", "사과 자판기가 곳곳에 설치되어 있습니다.", "산이 많고 공기가 맑아 힐링하기 좋습니다.", "예로부터 선비들이 즐겨 찾던 은둔의 고장입니다."] },
+  { file: "gimcheon", name: "김천시", lat: 36.139, lng: 128.113, hints: ["KTX역이 있어 교통의 요충지로 급부상했습니다.", "황악산 아래 직지사는 천년의 역사를 품고 있습니다.", "부항댐의 출렁다리는 짜릿한 체험을 선사합니다.", "포도 재배의 중심지로 브랜드 가치가 높습니다.", "혁신도시가 조성되어 현대적인 면모를 갖췄습니다.", "교통의 중심지인 만큼 물류가 활발합니다.", "연화지는 봄철 벚꽃이 아름답기로 유명합니다.", "부항댐에 설치된 출렁다리는 짜릿한 경치를 자랑합니다.", "직지사 주변의 산채 비빔밥이 아주 유명합니다.", "혁신도시 내 각종 공공기관이 밀집해 있습니다."] },
+  { file: "goryeong", name: "고령군", lat: 35.727, lng: 128.263, hints: ["대가야의 도읍지였던 역사의 현장입니다.", "지산동 고분군이 마을 뒤편 산에 줄지어 있습니다.", "대가야 박물관에서 찬란했던 왕국의 역사를 배웁니다.", "왕릉급 고분이 많이 발견된 문화 유적지입니다.", "딸기 농사가 매우 활발하여 체험객이 많습니다.", "낙동강이 군의 동쪽을 부드럽게 흐릅니다.", "대가야의 철기 문화는 당시 수준을 보여줍니다.", "역사 탐방을 원하는 학생들에게 최고의 장소입니다.", "오래전부터 시장이 발달하여 주변 상인들이 모여들던 곳입니다.", "대가야 시대의 토기 문화가 발달했습니다."] },
+  { file: "gumi", name: "구미시", lat: 36.119, lng: 128.344, hints: ["대한민국 전자 산업의 심장 역할을 했던 도시입니다.", "박정희 대통령의 생가가 위치한 곳입니다.", "금오산 도립공원은 시민들의 쉼터입니다.", "금오지의 야경은 데이트 코스로도 유명합니다.", "낙동강이 도심을 가로질러 흐릅니다.", "국가산업단지가 있어 경제 규모가 매우 큽니다.", "도리사는 신라에 처음 불교를 전한 절입니다.", "IT 강국 한국의 핵심 기지 중 하나입니다.", "채미정은 길재 선생의 충절이 서린 곳입니다.", "공단이 많아 도시의 야경이 화려합니다."] },
+  { file: "gyeongju", name: "경주시",  lat: 35.856, lng: 129.224, hints: ["신라의 천년 역사가 숨 쉬는 노천 박물관입니다.", "불국사는 세계문화유산으로 지정된 사찰입니다.", "석굴암은 신라 예술의 극치를 보여줍니다.", "첨성대는 동양에서 가장 오래된 천문대입니다.", "동궁과 월지의 야경은 전 국민의 사랑을 받습니다.", "대릉원의 거대한 고분들은 이색적인 풍경입니다.", "엑스포 공원이 상설 운영 중입니다.", "보문관광단지에는 거대한 호수가 있습니다.", "수학여행의 성지로 불리며 사계절 관광객이 넘칩니다.", "황리단길은 젊은 층에게 폭발적 인기를 끕니다."] },
+  { file: "gyeongsan", name: "경산시", lat: 35.826, lng: 128.735, hints: ["대추 생산지로 전국에서 손꼽히는 지역입니다.", "갓바위 부처님께 기도하면 소원이 이루어진다고 합니다.", "많은 대학이 모여 있는 대표적인 교육 도시입니다.", "반곡지는 사진작가들이 사랑하는 명소입니다.", "삼성현 문화공원은 원효, 설총, 일연을 기념합니다.", "영남대학교의 넓은 캠퍼스는 시민들의 쉼터입니다.", "대구의 위성 도시로서 급격히 성장했습니다.", "산업 단지가 많아 젊은 인구 유입이 많습니다.", "삼성현의 정신을 기리는 다양한 행사가 열립니다.", "대추 축제는 가을의 대표적인 행사입니다."] },
+  { file: "mungyeong", name: "문경시", lat: 36.586, lng: 128.187, hints: ["영남 선비들이 한양으로 가던 새재가 있습니다.", "석탄박물관은 옛 광부들의 삶을 보여줍니다.", "사과는 당도가 높기로 매우 유명합니다.", "오미자의 주산지로 전국 생산량의 상당수를 차지합니다.", "철로 자전거는 폐철로를 활용한 명물입니다.", "전국에서 가장 아름다운 도자기 축제가 열립니다.", "옛길 박물관에서 옛 선비들의 문화를 엿봅니다.", "다양한 영화와 드라마의 촬영지로 쓰이는 오픈세트장이 있습니다.", "진남교반은 이 지역의 절경으로 이름이 높습니다.", "백두대간이 웅장하게 가로지르는 산악 지역입니다."] },
+  { file: "pohang", name: "포항시", lat: 36.019, lng: 129.343, hints: ["대한민국 철강 산업의 상징인 포스코가 있습니다.", "호미곶에는 거대한 '상생의 손' 조형물이 있습니다.", "과메기는 겨울철 대표 특산물입니다.", "죽도시장은 동해안에서 가장 큰 활어시장입니다.", "환호공원의 스페이스워크는 공중 산책로로 핫합니다.", "영일대 해수욕장은 도심과 바다가 어우러져 있습니다.", "바다와 강이 만나는 지형적 특징이 있습니다.", "도심을 가로지르는 운하가 아름다운 물길을 이루고 있습니다.", "해돋이 명소로 매년 수많은 인파가 찾습니다.", "철강 도시답게 산업 현장의 야경이 아주 멋집니다."] },
+  { file: "sangju", name: "상주시", lat: 36.411, lng: 128.159, hints: ["쌀, 누에, 곶감이 유명한 '삼백(三白)의 고장'입니다.", "낙동강의 물줄기가 평화롭게 흐르는 평야 지대입니다.", "자전거 박물관이 있을 만큼 자전거 타기 좋은 평지 도시입니다.", "곶감 축제는 겨울철 대표 먹거리 행사입니다.", "경천대는 낙동강 물줄기가 휘감아 도는 최고의 절경입니다.", "역사적인 상산(商山)의 이름을 딴 유서 깊은 곳입니다.", "도남서원은 낙동강을 바라보며 학문을 닦던 곳입니다.", "농업 도시로서 전국적인 곡창 지대입니다.", "낙동강이 도시 전체를 감싸고 돌아 풍수적으로 좋습니다.", "매년 자전거 축제가 열려 시민들의 참여가 높습니다."] },
+  { file: "seongju", name: "성주군", lat: 35.918, lng: 128.283, hints: ["대한민국 참외 하면 가장 먼저 떠오르는 곳입니다.", "성밖숲은 수백 년 된 왕버드나무 군락지입니다.", "가야산의 웅장한 자락이 감싸고 있습니다.", "세종대왕자 태실은 왕실의 태를 묻은 성스러운 곳입니다.", "낙동강이 흐르며 비옥한 토양을 제공합니다.", "참외 축제는 매년 봄 참외 홍보를 위해 열립니다.", "여름에는 포천계곡 등 시원한 피서지가 많습니다.", "가야산 국립공원의 멋진 등산 코스가 있습니다.", "회연서원은 한강 정구 선생의 학문적 발자취입니다.", "참외 농사가 경제의 핵심을 이루는 도시입니다."] },
+  { file: "uiseong", name: "의성군", lat: 36.353, lng: 128.691, hints: ["대한민국 마늘 하면 가장 먼저 떠오르는 곳입니다.", "조문국 박물관은 고대 국가의 역사를 보여줍니다.", "고운사는 깊은 산속의 고즈넉한 사찰입니다.", "컬링 국가대표팀의 고향으로 유명해졌습니다.", "마늘은 브랜드 가치가 매우 높습니다.", "공룡 발자국 화석지가 곳곳에서 발견됩니다.", "산운 생태마을은 전통 가옥과 자연이 공존합니다.", "사과 재배도 대규모로 이루어지는 곳입니다.", "마늘 냄새가 향긋하게 풍기는 농업 중심 도시입니다.", "고대 조문국 시절의 무덤들이 산재해 있습니다."] },
+  { file: "uljin", name: "울진군", lat: 36.993, lng: 129.401, hints: ["동해안의 맑은 바닷물을 낀 대게의 본고장입니다.", "덕구온천은 자연 용출 온천으로 인기가 많습니다.", "금강소나무 숲길은 걷기 여행의 최고 코스입니다.", "성류굴은 신비한 석회동굴로 유명한 명소입니다.", "엑스포 공원에서는 다양한 해양 생태계를 배웁니다.", "동해 바다가 매우 깊고 깨끗하여 다이빙이 가능합니다.", "왕피천은 맑은 물이 흐르는 이 지역의 젖줄입니다.", "해양 박물관에서 바다의 역사를 배울 수 있습니다.", "죽변항은 싱싱한 수산물이 쏟아져 나오는 항구입니다.", "대게는 살이 꽉 차기로 유명하여 귀한 대접을 받습니다."] },
+  { file: "ulleung", name: "울릉군", lat: 37.481, lng: 130.903, hints: ["대한민국의 영토 독도를 관할하는 섬입니다.", "오징어 잡이 배들의 조명이 밤바다를 수놓습니다.", "나리분지는 이 지역의 유일한 평지이자 화산 지형입니다.", "호박엿은 대표적인 기념품입니다.", "성인봉은 섬 중심에 솟아 있는 높은 산입니다.", "바다가 매우 깊고 맑아 해산물이 풍부합니다.", "태하 향목 관광지에서 보는 바다 뷰가 최고입니다.", "삼선암은 바다 위에 솟은 기이한 바위입니다.", "육지에서 뱃길로만 갈 수 있는 신비의 섬입니다.", " 깎아지른 절벽이 많아 절경을 자랑합니다."] },
+  { file: "yecheon", name: "예천군", lat: 36.658, lng: 128.452, hints: ["회룡포는 낙동강 물줄기가 휘감아 도는 최고의 비경입니다.", "대한민국 양궁의 메카로 세계적인 선수를 많이 배출했습니다.", "삼강주막은 옛 주막의 정취가 그대로 남아 있습니다.", "곤충 박물관이 있어 어린이들에게 최고의 인기입니다.", "육지 속의 섬이라 불리는 회룡포 마을은 이색적입니다.", "금당실 전통마을은 고택들이 잘 보존되어 있습니다.", "양궁장 시설은 국내 최고 수준을 자랑합니다.", "낙동강과 내성천이 합쳐지는 지점이라 물이 풍부합니다.", "공군부대가 있어 훈련기 소리를 자주 듣습니다.", "자연 친화적이고 조용한 마을이 많은 도시입니다."] },
+  { file: "youngcheon", name: "영천시", lat: 35.973, lng: 128.938, hints: ["보현산 천문대는 한국 최고의 별 관측 명소입니다.", "말 산업 특구로 지정되어 승마 시설이 많습니다.", "포도와 와인 양조가 활발하여 와이너리가 많습니다.", "풍경이 수려한 댐 주변은 드라이브 코스로 큰 인기를 끕니다.", "임고서원은 포은 정몽주 선생을 기리는 곳입니다.", "별이 잘 보여 별빛 축제가 매년 열립니다.", "한약재 시장이 크게 발달해 있어 냄새가 독특합니다.", "공설 시장은 규모가 크고 먹거리가 풍성합니다.", "승마 체험이 가능하여 가족 단위 나들이로 좋습니다.", "지리적으로 대구와 경주 사이에 위치하여 교통이 편리합니다."] },
+  { file: "youngduk", name: "영덕군", lat: 36.413, lng: 129.366, hints: ["대게 요리의 성지로 전국적으로 유명합니다.", "블루로드 길은 해안가를 걷는 여행의 묘미를 줍니다.", "강구항에는 대게 전문점이 줄지어 늘어서 있습니다.", "풍력 발전 단지가 있어 이색적인 풍경을 자아냅니다.", "고래불 해수욕장은 넓고 푸른 바다를 자랑합니다.", "해파랑길은 동해안을 따라 걷는 긴 길입니다.", "대게 요리는 이 지역 여행의 최종 목표이기도 합니다.", "해안 드라이브 코스가 매우 아름답기로 유명합니다.", "괴시 전통마을은 고풍스러운 한옥이 잘 보존되어 있습니다.", "바다와 산이 모두 깊어 여행의 즐거움이 배가 됩니다."] },
+  { file: "youngju", name: "영주시", lat: 36.827, lng: 128.621, hints: ["한국 건축의 정수, 부석사 무량수전이 있습니다.", "소수서원은 한국 최초의 사액 서원으로 역사가 깊습니다.", "풍기 인삼이 유명하여 건강의 도시로 알려져 있습니다.", "소백산 자락의 맑은 공기와 풍경이 아주 좋습니다.", "무섬마을의 외나무다리는 인스타 감성 명소입니다.", "선비촌에서 조선 시대 선비들의 삶을 체험합니다.", "사과도 많이 생산되어 사과 축제가 열립니다.", "역사 유적이 매우 많아 문화재 탐방에 좋습니다.", "평화로운 호수 주변은 관광객들에게 힐링 장소를 제공합니다.", "소백산 등산객들이 즐겨 찾는 거점 도시입니다."] },
+  { file: "youngyang", name: "영양군", lat: 36.666, lng: 129.112, hints: ["대한민국에서 별을 가장 선명하게 볼 수 있는 곳입니다.", "밤하늘 공원은 국제 밤하늘 보호공원으로 지정되었습니다.", "반딧불이 축제가 열릴 정도로 청정 자연입니다.", "매운 고추가 특산물로 매우 유명합니다.", "오지 마을이 많아 자연 그대로의 느낌이 강합니다.", "조지훈 문학관이 있을 만큼 문학의 고장입니다.", "자연 환경이 매우 잘 보존되어 있어 힐링의 성지입니다.", "일월산은 이의 상징과 같은 높은 산입니다.", "별 보기 가장 좋은 곳이라 천문 애호가들이 모입니다.", "조용하고 평화로운 분위기를 원하는 사람들에게 최고입니다."] }
+];
+let currentTarget = null, hintIdx = 0, boundaryLayer = null, startTime = null, timerInterval = null, score = 100, questionCount = 0;
+let isSaved = false;
+
+const map = L.map('map', { 
+    dragging: true,          
+    scrollWheelZoom: false,   
+    touchZoom: false,         
+    doubleClickZoom: false,  
+    zoomControl: false,       
+    maxBounds: gyeongbukBounds, 
+    minZoom: 9 
+}).setView([36.5, 128.5], 11);L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png').addTo(map);
+
+async function startGame() {
+    score = 200; 
+    questionCount++;
+    
+    hintIdx = 0;
+    document.getElementById('hint-display').innerText = "여기에 힌트가 나타납니다.";
+    
+    currentTarget = gyeongbukRegions[Math.floor(Math.random() * gyeongbukRegions.length)];
+    let shuffledHints = [...currentTarget.hints];
+    for (let i = shuffledHints.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledHints[i], shuffledHints[j]] = [shuffledHints[j], shuffledHints[i]];
+    }
+    currentTarget.shuffledHints = shuffledHints;
+
+    const response = await fetch(`data/${currentTarget.file}.geojson`);
+    const geoData = await response.json();
+    
+    if(boundaryLayer) map.removeLayer(boundaryLayer);
+    boundaryLayer = L.geoJSON(geoData, { style: { color: 'blue', weight: 3, fillOpacity: 0 } }).addTo(map);
+    map.setView([currentTarget.lat, currentTarget.lng], 16);
+    
+    updateStatus();
+    document.getElementById('answer').value = "";
+    document.getElementById('answer').focus();
+}
+let lastZoomOutTime = 0; 
+
+function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    startTime = Date.now();
+    lastZoomOutTime = startTime; 
+    
+    timerInterval = setInterval(() => {
+    const now = Date.now();
+    const elapsed = (now - startTime) / 1000;
+    document.getElementById('timer').innerText = elapsed.toFixed(1) + "초";
+
+  
+    if (elapsed > 0 && Math.floor(elapsed) % 1 === 0) {
+        if (score > 0) {
+            score -= 1; 
+            updateStatus();
+            checkGameOver();
+        }
+    }
+
+    if (now - lastZoomOutTime >= 5000) { 
+        autoZoomOut();
+        lastZoomOutTime = now;
+    }
+}, 100);
+}
+
+function autoZoomOut() {
+    let nextZoom = map.getZoom() - 1;
+    if (nextZoom >= 9) {
+        map.setZoom(nextZoom); 
+    }
+}
+
+function checkGameOver() {
+    if (score <= 0) {
+        score = 0; 
+        updateStatus(); 
+        clearInterval(timerInterval); 
+        window.playGameSound('gameOver');
+         saveAndShowResult(0); 
+        
+        return true;
+    }
+    return false;
+}
+
+function zoomOut() {
+    score -= 10;
+    updateStatus();
+    if (!checkGameOver()) {
+        map.setZoom(map.getZoom() - 1);
+    }
+}
+function showTextHint() {
+    if (hintIdx < currentTarget.shuffledHints.length) {
+        score -= 10; 
+        updateStatus();
+        document.getElementById('hint-display').innerText = "힌트: " + currentTarget.shuffledHints[hintIdx];
+        hintIdx++;
+        
+        checkGameOver(); 
+    } else {
+        document.getElementById('hint-display').innerText = "더 이상 힌트가 없습니다.";
+    }
+}
+
+function updateStatus() {
+    document.getElementById('status').innerText = `문제 ${questionCount}번`;
+    document.getElementById('score-board').innerText = `점수: ${score}점`;
+    
+}
+function checkAnswer() {
+    if(document.getElementById('answer').value === currentTarget.name) {
+        clearInterval(timerInterval);
+        score += 200;
+        window.playGameSound('correct'); 
+        
+        if (questionCount >= 5) {
+            saveAndShowResult(score); 
+        } else {
+            alert("정답입니다! 다음 문제로 넘어갑니다.");
+            startGame();
+            startTimer();
+        }
+    } else {
+        window.playGameSound('wrong'); 
+        alert("틀렸습니다. 다시 생각해보세요!");
+    }
+}
+
+function hideCover() {
+    document.getElementById('cover').style.display = 'none';
+    startGame();
+    startTimer();
+}
+
+document.getElementById('answer').addEventListener('keypress', (e) => { if(e.key === 'Enter') checkAnswer(); });
+
+function showHelp() {
+  document.getElementById('helpModal').style.display = 'flex';
+}
+
+ const firebaseConfig = {
+    apiKey: "AIzaSyCFRZFFaU4h-LMGcHwYYoni-SyuDY0-2k8",
+    authDomain: "where-is-this-ef31b.firebaseapp.com",
+    projectId: "where-is-this-ef31b",
+    storageBucket: "where-is-this-ef31b.firebasestorage.app",
+    messagingSenderId: "959623211817",
+    appId: "1:959623211817:web:96624f9be6a4297d8ba538",
+    measurementId: "G-B4NGRK17EX"
+  };
+firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+firebase.auth().onAuthStateChanged((user) => {
+  if (user) {
+    console.log("로그인된 유저:", user.email);
+  } else {
+    console.log("로그인되지 않음");
+  }
+});
+window.saveScore = function(score) {
+  const auth = firebase.auth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    console.log("로그인 정보 로딩 중... 500ms 대기");
+    setTimeout(() => {
+      const retryUser = auth.currentUser;
+      if (retryUser) {
+        performSave(retryUser, score);
+      } else {
+        alert("로그인 정보가 없습니다. 다시 로그인해주세요.");
+      }
+    }, 500);
+  } else {
+    performSave(user, score);
+  }
+};
+
+function performSave(user, score) {
+  db.collection("rankings").add({
+    name: user.email.split('@')[0],
+    score: score,
+    uid: user.uid,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  })
+  .then(() => {
+    alert("점수가 성공적으로 저장되었습니다!");
+  })
+  .catch((error) => {
+    console.error("저장 실패:", error);
+    alert("저장 중 에러 발생: " + error.message);
+  });
+}
+window.showRanking = function() {
+  const modal = document.getElementById('rankingModal');
+  const list = document.getElementById('ranking-list');
+  const title = modal.querySelector('.menu-title');
+  
+  modal.style.display = 'flex';
+  list.innerHTML = "데이터 불러오는 중...";
+  title.innerText = "경북 지리 탐험 랭킹"; 
+
+  db.collection("rankings")
+    .orderBy("score", "desc")
+    .orderBy("timestamp", "desc")
+    .limit(5) 
+    .get()
+    .then((snapshot) => {
+      if (snapshot.empty) {
+        list.innerHTML = "아직 랭킹 정보가 없습니다.";
+        return;
+      }
+      
+      let html = `<table style="width:100%; border-collapse:collapse; color:#2f4f38; font-size: 1.5rem;">
+                    <tr style="border-bottom:2px solid #ccc;">
+                      <th>순위</th><th>이름</th><th>학교</th><th>점수</th>
+                    </tr>`;
+      let count = 1;
+      
+      snapshot.forEach((doc) => {
+        let data = doc.data();
+        let medal = count === 1 ? "🥇" : count === 2 ? "🥈" : count === 3 ? "🥉" : count + "위";
+        let className = data.classCode || "알수없음";
+
+        html += `<tr style="border-bottom:1px solid #eee;">
+                   <td style="padding:8px;">${medal}</td>
+                   <td style="padding:8px;">${data.name}</td>
+                   <td style="padding:8px;">${className}</td>
+                   <td style="padding:8px;">${data.score}점</td>
+                 </tr>`;
+        count++;
+      });
+      html += `</table>`;
+      list.innerHTML = html;
+    });
+};
+async function saveAndShowResult(score) {
+  if (isSaved) return;
+  isSaved = true;
+
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+
+  const userDoc = await db.collection("users").doc(user.uid).get();
+  const userData = userDoc.data();
+  const classCode = userData ? userData.classCode : "알수없음";
+
+  await db.collection("rankings").add({
+    name: user.email.split('@')[0],
+    score: score,
+    classCode: classCode,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  const snapshot = await db.collection("rankings")
+                           .orderBy("score", "desc")
+                           .limit(5)
+                           .get();
+
+  const snap = await db.collection("rankings").where("score", ">", score).get();
+  const myRank = snap.size + 1;
+
+  let rankingHtml = `<table style="width:100%; border-collapse:collapse; color:#2f4f38; font-size: 1.1rem;">
+                      <tr style="border-bottom:2px solid #ccc;">
+                        <th>순위</th><th>이름</th><th>소속</th><th>점수</th>
+                      </tr>`;
+  
+  let count = 1;
+  snapshot.forEach((doc) => {
+    let data = doc.data();
+    let medal = count === 1 ? "🥇" : count === 2 ? "🥈" : count === 3 ? "🥉" : count + "위";
+    let className = data.classCode || "알수없음";
+    rankingHtml += `<tr style="border-bottom:1px solid #eee;">
+                      <td style="padding:8px;">${medal}</td>
+                      <td style="padding:8px;">${data.name}</td>
+                      <td style="padding:8px;">${className}</td>
+                      <td style="padding:8px;">${data.score}점</td>
+                    </tr>`;
+    count++;
+  });
+  rankingHtml += `</table>`;
+
+  document.getElementById('final-score').innerText = score + "점";
+  document.getElementById('player-rank').innerHTML = 
+    `<div style="font-size:1.3rem; margin-bottom:10px;">전체 순위: <b>${myRank}등</b></div>` +
+    rankingHtml; 
+      
+  document.getElementById('resultModal').style.display = "flex";
+}
+</script>
+<script src="game_sound.js"></script>
+</body>
+</html>

@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>나의 지역 일기장</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: none;
+    }
+
+    .app {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .bg-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+
+    .back-btn {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      z-index: 100;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px); 
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+    .back-btn:active {
+      transform: scale(0.9);
+    }
+
+    .ui {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 5vw;
+    }
+
+    .menu-card {
+      width: min(95vw, 38rem); 
+      max-height: 85vh;
+      padding: clamp(1.5rem, 3.5vw, 2.2rem);
+      border-radius: clamp(1.1rem, 3vw, 1.6rem);
+      background: rgba(248, 255, 250, 0.86);
+      box-shadow: 0 0.9rem 2rem rgba(34, 94, 54, 0.18);
+      backdrop-filter: blur(0.35rem);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .menu-title {
+      text-align: center;
+      font-size: clamp(1.2rem, 3vw, 1.5rem);
+      font-weight: 800;
+      color: #2f4f38;
+      margin-bottom: 1.2rem;
+    }
+
+    .diary-panel {
+      display: none;
+      width: 100%;
+    }
+    .diary-panel.panel-active {
+      display: block;
+    }
+
+    .btn-green {
+      border: none;
+      color: #fff;
+      background: linear-gradient(180deg, #6db785 0%, #3f8f5b 100%);
+      box-shadow: 0 0.4rem 0.8rem rgba(63, 143, 91, 0.2);
+      font-weight: 800;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: transform 0.15s ease;
+    }
+    .btn-green:active { transform: scale(0.98); }
+
+    .btn-white {
+      border: 0.12rem solid #9fd3ad;
+      color: #3f8f5b;
+      background: rgba(255, 255, 255, 0.95);
+      font-weight: 800;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-white:active { transform: scale(0.98); }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      border: 1px solid #c8e2d1;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 0.95rem;
+      background: rgba(255, 255, 255, 0.9);
+      color: #333;
+    }
+    .form-textarea { height: 120px; resize: none; line-height: 1.5; }
+
+    .place-card {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #dcefe1;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .post-actions {
+      display: flex;
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .action-btn-mini {
+      border: 0.1rem solid #9fd3ad;
+      color: #3f8f5b;
+      background: rgba(255, 255, 255, 0.95);
+      font-weight: 800;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      transition: all 0.15s ease;
+    }
+    .action-btn-mini:hover {
+      background: rgba(240, 252, 243, 0.95);
+      transform: translateY(-1px);
+    }
+    .action-btn-mini:active {
+      transform: scale(0.96);
+    }
+
+    .delete-btn-mini {
+      border: 0.1rem solid #feca21; 
+      color: #e53e3e;
+      margin-left: auto; 
+    }
+
+    .toast-msg {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(63, 143, 91, 0.95);
+      color: white;
+      padding: 12px 25px;
+      border-radius: 50px;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      z-index: 9999;
+      opacity: 0;
+      transition: all 0.4s ease;
+    }
+    .toast-msg.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .private-badge {
+      background: #fee2e2;
+      color: #ef4444;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <video class="bg-video" autoplay muted loop playsinline>
+      <source src="video/main.mp4" type="video/mp4" />
+    </video>
+
+   <div class="back-btn" onclick="setTimeout(() => location.href='home.html', 200)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </div>
+
+    <div class="ui">
+      <div class="menu-card">
+        <div class="menu-title">나의 지역 일기장 🗺️</div>
+        
+        <div class="diary-panel panel-active" id="main-section">
+
+          <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+            <button id="view-class-btn" class="btn-green" style="flex: 1; padding: 12px; font-size:14px;">🏫 우리 반 일기 보기</button>
+            <button id="view-region-btn" class="btn-white" style="flex: 1; padding: 12px; font-size:14px;">📍 지역별 일기 보기</button>
+          </div>
+          
+          <div style="margin-bottom: 6px;">
+            <div id="class-info-display" style="display: block; padding: 12px; width: 100%; background: rgba(63,143,91,0.1); border: 1px dashed #3f8f5b; border-radius: 8px; color: #2f4f38; font-weight: 800; text-align: center; font-size: 0.95rem;">
+              ⏳ 우리 반 정보를 안전하게 연결하고 있습니다...
+            </div>
+            
+            <select id="filter-region-select" class="form-select" style="display: none; padding: 12px; width: 100%;">
+              <option value="">탐험할 지역을 선택하세요 (전체보기)</option>
+              <option value="경주시">경주시</option><option value="안동시">안동시</option><option value="김천시">김천시</option>
+              <option value="문경시">문경시</option><option value="영덕군">영덕군</option><option value="예천군">예천군</option>
+              <option value="울릉군">울릉군</option><option value="독도">독도</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom: 15px;">
+            <button id="open-write-btn" class="btn-green" style="width: 100%; padding: 14px; font-size: 15px; font-weight: 800; letter-spacing: 0.5px;">
+              ✍️ 나도 탐험 일기 작성하기
+            </button>
+          </div>
+
+          <div id="post-list" style="max-height: 48vh; overflow-y: auto; padding-right: 2px;"></div>
+        </div>
+
+        <div class="diary-panel" id="write-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: #2f4f38; margin: 0; font-weight: 800; font-size: clamp(1.1rem, 2.5vw, 1.3rem);">✍️ 나의 탐험 일기 작성</h3>
+            <button id="close-write-btn" class="btn-white" style="padding: 6px 14px; font-size: 12px; border-radius: 6px; box-shadow: 0 2px 5px rgba(63, 143, 91, 0.05);">
+              ✕ 취소하고 나가기
+            </button>
+          </div>
+          
+          <div id="display-nickname" style="font-weight: 800; color: #3f8f5b; margin-bottom: 12px; font-size: 0.95rem;"></div>
+          
+          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <div style="width: 100%;">
+              <label style="font-size: 11px; font-weight: bold; color: #666; display: block; margin-bottom: 4px;">탐험 지역 선택</label>
+              <select id="user-region" class="form-select" style="padding: 10px; font-size:0.9rem;">
+                <option value="">지역 선택</option>
+                <option value="경주시">경주시</option><option value="안동시">안동시</option><option value="김천시">김천시</option>
+                <option value="문경시">문경시</option><option value="영덕군">영덕군</option><option value="예천군">예천군</option>
+                <option value="울릉군">울릉군</option><option value="독도">독도</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <textarea id="user-comment" class="form-textarea" placeholder="오늘 탐험한 지역에서 무엇을 보고 느꼈나요? 예쁜 사진과 함께 친구들에게 이야기해 주세요!🌿" style="height: 150px;"></textarea>
+          </div>
+
+          <div style="margin-bottom: 15px; background: rgba(255,255,255,0.7); padding: 10px; border-radius: 8px; border: 1px solid #dcefe1; display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="diary-privacy-check" style="width: 17px; height: 17px; cursor: pointer; accent-color: #3f8f5b;">
+            <label for="diary-privacy-check" style="font-size: 13px; font-weight: bold; color: #2f4f38; cursor: pointer; user-select: none;">🔒 나만 보기 (비공개로 저장)</label>
+          </div>
+
+          <div style="margin-bottom: 15px;">
+            <label for="photo-input" class="btn-white" style="display:inline-block; padding:8px 12px; font-size:12px; cursor: pointer;">📸 사진 첨부하기</label>
+            <input type="file" id="photo-input" accept="image/*" style="display:none;">
+            <img id="image-preview" style="width:100%; max-height:110px; object-fit:cover; border-radius:6px; margin-top:8px; display:none; border:1px solid #ddd;">
+          </div>
+
+          <button class="btn-green" id="student-upload-btn" type="button" style="width: 100%; padding: 13px; font-size:1rem;">탐험 일기 등록하기</button>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, doc, deleteDoc, updateDoc, increment, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFRZFFaU4h-LMGcHwYYoni-SyuDY0-2k8",
+    authDomain: "where-is-this-ef31b.firebaseapp.com",
+    projectId: "where-is-this-ef31b",
+    storageBucket: "where-is-this-ef31b.firebasestorage.app",
+    messagingSenderId: "959623211817",
+    appId: "1:959623211817:web:96624f9be6a4297d8ba538"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  const storage = getStorage(app);
+
+  let currentNick = "";
+  let userClassCode = ""; 
+  let unsubscribe = null;
+  let selectedFile = null;
+
+  let currentViewMode = "class"; 
+  let currentSortBy = "createdAt"; 
+
+  function showToast(message) {
+    const toast = document.createElement("div");
+    toast.className = "toast-msg";
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 100);
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 400);
+    }, 2500);
+  }
+
+  document.getElementById("photo-input").onchange = (e) => {
+    selectedFile = e.target.files[0];
+    const preview = document.getElementById("image-preview");
+    if (selectedFile) {
+      const reader = new FileReader();
+      reader.onload = (ex) => {
+        preview.src = ex.target.result;
+        preview.style.display = "block";
+      };
+      reader.readAsDataURL(selectedFile);
+    } else {
+      preview.style.display = "none";
+    }
+  };
+
+  window.deletePost = async (postId) => {
+    if (confirm("정말 이 탐험 일기를 삭제할까요?")) {
+      try {
+        await deleteDoc(doc(db, "diaries", postId));
+        showToast("삭제되었습니다. 🗑️");
+      } catch (e) { console.error(e); }
+    }
+  };
+
+  window.likePost = async (postId) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    const postRef = doc(db, "diaries", postId);
+    try {
+      const postSnap = await getDoc(postRef);
+      const postData = postSnap.data();
+      const isLiked = postData.likedBy && postData.likedBy.includes(user.uid);
+      if (isLiked) {
+        await updateDoc(postRef, { likes: increment(-1), likedBy: arrayRemove(user.uid) });
+        showToast("추천을 취소했습니다. 💔");
+      } else {
+        await updateDoc(postRef, { likes: increment(1), likedBy: arrayUnion(user.uid) });
+        showToast("추천 완료! 👍");
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  window.addComment = async (postId) => {
+    const input = document.getElementById(`comment-input-${postId}`);
+    if (!input.value) return showToast("댓글 내용을 입력해주세요!");
+    try {
+      const postRef = doc(db, "diaries", postId);
+      await updateDoc(postRef, {
+        comments: arrayUnion({
+          writer: currentNick,
+          uid: auth.currentUser.uid,
+          text: input.value,
+          createdAt: new Date().toISOString()
+        })
+      });
+      input.value = "";
+      showToast("댓글이 등록되었습니다! 💬");
+    } catch (e) { console.error(e); }
+  };
+
+  window.deleteComment = async (postId, commentIdx) => {
+    if (!confirm("댓글을 삭제하시겠습니까?")) return;
+    const postRef = doc(db, "diaries", postId);
+    try {
+      const postSnap = await getDoc(postRef);
+      const comments = postSnap.data().comments;
+      const newComments = comments.filter((_, index) => index !== commentIdx);
+      await updateDoc(postRef, { comments: newComments });
+      showToast("댓글이 삭제되었습니다.");
+    } catch (e) { console.error(e); }
+  };
+
+  function loadDiaries() {
+    if (unsubscribe) unsubscribe();
+
+    const listDiv = document.getElementById("post-list");
+    if (!listDiv) return;
+
+    let q;
+    const diariesRef = collection(db, "diaries");
+
+    if (currentViewMode === "class") {
+      if (!userClassCode) {
+        listDiv.innerHTML = "<div style='text-align:center; padding:5px 0; color:#666; font-size:13px;'>🏫 학급 데이터를 안전하게 불러오는 중입니다...</div>";
+        return;
+      }
+      q = query(diariesRef, where("classCode", "==", userClassCode), orderBy(currentSortBy, "desc"));
+    } else {
+      const regionSelectValue = document.getElementById("filter-region-select").value;
+      if (!regionSelectValue) {
+        listDiv.innerHTML = "<div style='text-align:center; padding:5px 0; color:#999; font-size:13px;'>🌍 탐험할 지역을 선택하시면 친구들의 일기가 나타납니다!</div>";
+        return;
+      }
+      q = query(diariesRef, where("regionName", "==", regionSelectValue), orderBy(currentSortBy, "desc"));
+    }
+
+    unsubscribe = onSnapshot(q, (snapshot) => {
+      listDiv.innerHTML = "";
+
+      if (snapshot.empty) {
+        listDiv.innerHTML = "<div style='text-align:center; padding:20px; color:#999;'>선택한 조건의 탐험 일기가 아직 없습니다. 첫 일기를 써보세요! 🌿</div>";
+        return;
+      }
+
+      snapshot.forEach((postDoc) => {
+        const data = postDoc.data();
+        const postId = postDoc.id;
+        const isMyPost = data.uid === auth.currentUser?.uid;
+
+        if (data.isPublic === false && !isMyPost) {
+          return; 
+        }
+
+        const commentHtml = (data.comments || []).map((c, index) => {
+          const isMyComment = c.uid === auth.currentUser?.uid;
+          return `
+            <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px;"><b style="color:#3f8f5b;">${c.writer}:</b> ${c.text}</span>
+              ${isMyComment ? `<button onclick="deleteComment('${postId}', ${index})" style="background:none; border:none; color:#e53e3e; cursor:pointer; font-size:10px;">✕</button>` : ""}
+            </div>`;
+        }).join("");
+
+        const privacyBadgeHtml = data.isPublic === false ? `<span class="private-badge">🔒 나만 보기</span>` : "";
+
+        listDiv.innerHTML += `
+          <div class="place-card" style="margin-bottom:20px; border:1px solid #dcefe1; position:relative;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; color:#666; margin-bottom:5px;">
+              <span>🏫 소속학급: <b>${data.classCode}</b></span>
+              <div style="display:flex; gap:5px; align-items:center;">
+                ${privacyBadgeHtml}
+                <span style="background:#eef7f1; color:#3f8f5b; padding:2px 8px; border-radius:20px; font-weight:bold;">📍 ${data.regionName}</span>
+              </div>
+            </div>
+            <div style="color:#3f8f5b; font-size:14px; font-weight:bold; margin-top:5px;">${data.writer} 친구의 탐험기</div>
+            ${data.photo ? `<img src="${data.photo}" style="width:100%; max-height:250px; object-fit:cover; border-radius:10px; margin:10px 0; border:1px solid #eee;">` : ""}
+            <div style="margin:10px 0; font-size:14px; line-height:1.5; white-space:pre-wrap;">${data.text}</div>
+            
+            <div class="post-actions">
+              <button class="action-btn-mini" onclick="likePost('${postId}')">❤️ 추천 ${data.likes || 0}</button>
+              <button class="action-btn-mini" style="cursor: default; pointer-events: none;">💬 댓글 ${(data.comments || []).length}</button>
+              ${isMyPost ? `<button class="action-btn-mini delete-btn-mini" onclick="deletePost('${postId}')">🗑️ 지우기</button>` : ""}
+            </div>
+
+            <div class="comment-section" style="background:#f9fcf9; padding:10px; border-radius:10px; margin-top:10px;">
+              <div id="comments-${postId}">${commentHtml}</div>
+              <div class="comment-input-group" style="display:flex; gap:5px; margin-top:8px;">
+                <input type="text" id="comment-input-${postId}" class="comment-input" placeholder="댓글 달기..." style="flex:1; padding:5px; border-radius:5px; border:1px solid #ddd; font-size:12px;">
+                <button onclick="addComment('${postId}')" style="border:none; background:#3f8f5b; color:white; border-radius:4px; padding:4px 10px; cursor:pointer; font-size:12px;">등록</button>
+              </div>
+            </div>
+          </div>`;
+      });
+    }, (err) => {
+      console.error(err);
+    });
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentNick = user.displayName || user.email.split('@')[0];
+      document.getElementById("display-nickname").innerText = `✍️ 작성자: ${currentNick}`;
+      
+      try {
+        const userDocRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userDocRef);
+        
+        if (userSnap.exists() && userSnap.data().classCode) {
+          userClassCode = userSnap.data().classCode;
+          document.getElementById("class-info-display").innerText = `🏫 우리 반 일기장: ${userClassCode}`;
+          loadDiaries();
+        } else {
+          document.getElementById("class-info-display").innerText = `🏫 연동된 학교 정보가 없습니다.`;
+          showToast("학급 인증 코드를 찾을 수 없습니다.");
+          loadDiaries();
+        }
+      } catch (e) {
+        console.error(e);
+        document.getElementById("class-info-display").innerText = `🏫 학급 정보 연동 실패`;
+        loadDiaries();
+      }
+    } else {
+      location.href = "start.html";
+    }
+  });
+
+  document.getElementById("open-write-btn").onclick = () => {
+    document.getElementById("main-section").classList.remove("panel-active");
+    document.getElementById("write-section").classList.add("panel-active");
+  };
+
+  document.getElementById("close-write-btn").onclick = () => {
+    document.getElementById("write-section").classList.remove("panel-active");
+    document.getElementById("main-section").classList.add("panel-active");
+  };
+
+  document.getElementById("view-class-btn").onclick = () => {
+    currentViewMode = "class";
+    document.getElementById("view-class-btn").className = "btn-green";
+    document.getElementById("view-region-btn").className = "btn-white";
+    document.getElementById("class-info-display").style.display = "block";
+    document.getElementById("filter-region-select").style.display = "none";
+    document.getElementById("post-list").innerHTML = "";
+    loadDiaries();
+  };
+
+  document.getElementById("view-region-btn").onclick = () => {
+    currentViewMode = "region";
+    document.getElementById("view-class-btn").className = "btn-white";
+    document.getElementById("view-region-btn").className = "btn-green";
+    document.getElementById("class-info-display").style.display = "none";
+    document.getElementById("filter-region-select").style.display = "block";
+    document.getElementById("post-list").innerHTML = "";
+    loadDiaries();
+  };
+
+  document.getElementById("filter-region-select").onchange = () => { loadDiaries(); };
+
+  document.getElementById("student-upload-btn").onclick = async () => {
+    const region = document.getElementById("user-region").value;
+    const comment = document.getElementById("user-comment").value.trim();
+    const isPrivateChecked = document.getElementById("diary-privacy-check").checked; 
+
+    if (!region) return showToast("탐험하신 지역을 선택해주세요! 📍");
+    if (!comment) return showToast("일기 내용을 작성해주세요! ✍️");
+    if (!userClassCode) return showToast("학급 인증 정보가 없습니다. 다시 로그인해 주세요.");
+
+    const btn = document.getElementById("student-upload-btn");
+    btn.disabled = true;
+    btn.innerText = "업로드 중...";
+
+    try {
+      let photoURL = "";
+      if (selectedFile) {
+        const storageRef = ref(storage, `diary_photos/${Date.now()}_${selectedFile.name}`);
+        const snapshot = await uploadBytes(storageRef, selectedFile);
+        photoURL = await getDownloadURL(snapshot.ref);
+      }
+
+      await addDoc(collection(db, "diaries"), {
+        regionName: region,
+        classCode: userClassCode, 
+        writer: currentNick,
+        uid: auth.currentUser.uid,
+        text: comment,
+        photo: photoURL,
+        isPublic: !isPrivateChecked, 
+        likes: 0,
+        likedBy: [],
+        comments: [],
+        createdAt: new Date()
+      });
+
+      showToast("일기가 성공적으로 등록되었습니다! 🎉");
+
+      document.getElementById("user-comment").value = "";
+      document.getElementById("photo-input").value = "";
+      document.getElementById("diary-privacy-check").checked = false; 
+      document.getElementById("image-preview").style.display = "none";
+      selectedFile = null;
+      btn.disabled = false;
+      btn.innerText = "탐험 일기 등록하기";
+
+      document.getElementById("write-section").classList.remove("panel-active");
+      document.getElementById("main-section").classList.add("panel-active");
+
+      setTimeout(() => loadDiaries(), 300);
+
+    } catch (e) {
+      console.error(e);
+      showToast("등록 실패. 다시 시도해 주세요.");
+      btn.disabled = false;
+      btn.innerText = "탐험 일기 등록하기";
+    }
+  };
+</script>
+<script src="sound.js"></script>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>지리 탐험 앱</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: none;
+    }
+
+    .app {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .bg-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+
+    .ui {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      padding-left: 5vw;
+      padding-right: 5vw;
+      padding-bottom: calc(env(safe-area-inset-bottom) + 20vh); 
+    }
+
+    .login-card {
+      width: min(102vw, 38rem);
+      padding: clamp(2.1rem, 4.8vw, 2.6rem);
+      border-radius: clamp(1.1rem, 3vw, 1.6rem);
+      background: rgba(248, 255, 250, 0.86);
+      box-shadow: 0 0.9rem 2rem rgba(34, 94, 54, 0.18);
+      backdrop-filter: blur(0.35rem);
+    }
+
+    .form-title {
+      text-align: center;
+      font-size: clamp(1.4rem, 3vw, 1.8rem);
+      font-weight: 800;
+      color: #2f4f38;
+      margin-bottom: 1.2rem;
+    }
+
+    .form-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.7rem, 2.5vw, 0.95rem);
+    }
+
+    .input-field {
+      width: 100%;
+      height: clamp(4.5rem, 8vw, 5rem); 
+      border: 0.12rem solid #cfe6d4;
+      border-radius: clamp(0.85rem, 2.4vw, 1rem);
+      padding: 0 1rem;
+      font-size: clamp(1.05rem, 2.8vw, 1.2rem);
+      color: #2f4f38;
+      background: rgba(245, 252, 246, 0.96);
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .input-field::placeholder {
+      color: #8eaa96;
+    }
+
+    .input-field:focus {
+      border: 0.12rem solid #79b98a;
+      box-shadow: 0 0 0 0.22rem rgba(121, 185, 138, 0.16);
+    }
+
+    .main-btn,
+    .sub-btn {
+      width: 100%;
+      height: clamp(4rem, 8vw, 4.5rem);
+      border-radius: clamp(0.85rem, 2.4vw, 1rem);
+      font-size: clamp(1rem, 2.8vw, 1.15rem);
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .main-btn:active,
+    .sub-btn:active {
+      transform: scale(0.98);
+    }
+
+    .main-btn {
+      margin-top: 0.2rem;
+      border: none;
+      color: #fff;
+      background: linear-gradient(180deg, #6db785 0%, #3f8f5b 100%);
+      box-shadow: 0 0.7rem 1.2rem rgba(63, 143, 91, 0.24);
+    }
+
+    .sub-btn {
+      border: 0.12rem solid #9fd3ad;
+      color: #3f8f5b;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 0.45rem 1rem rgba(63, 143, 91, 0.08);
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .toast-msg {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(63, 143, 91, 0.95);
+      color: white;
+      padding: 12px 25px;
+      border-radius: 50px;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      z-index: 9999;
+      opacity: 0;
+      transition: all 0.4s ease;
+      pointer-events: none;
+    }
+
+    .toast-msg.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <video class="bg-video" autoplay muted loop playsinline>
+      <source src="video/main.mp4" type="video/mp4" />
+    </video>
+
+    <div class="ui">
+      <div class="login-card">
+
+        <div class="panel active" id="loginPanel">
+          <div class="form-title">로그인</div>
+          <div class="form-wrap">
+            <input type="text" class="input-field" id="loginId" placeholder="아이디를 입력해주세요" />
+            <input type="password" class="input-field" id="loginPw" placeholder="비밀번호를 입력해주세요" />
+
+            <button class="main-btn" id="loginBtn">로그인</button>
+            <button class="sub-btn" id="showSignupBtn">회원가입</button>
+          </div>
+        </div>
+
+        <div class="panel" id="signupPanel">
+          <div class="form-title">회원가입</div>
+          <div class="form-wrap">
+            <input type="text" class="input-field" id="signupId" placeholder="아이디를 입력해주세요" />
+            <input type="password" class="input-field" id="signupPw" placeholder="비밀번호를 입력해주세요 (6자리 이상)" />
+            <input type="text" class="input-field" id="signupNick" placeholder="닉네임을 입력해주세요" />
+            
+            <div style="display: flex; gap: 10px;">
+              <input type="text" class="input-field" id="signupSchool" placeholder="학교 이름 (예: 예천초)" style="flex: 1.2;" />
+              <input type="text" class="input-field" id="signupGradeClass" placeholder="학년-반 (예: 5-1)" style="flex: 0.8;" />
+            </div>
+
+            <button class="main-btn" id="signupBtn">가입하기</button>
+            <button class="sub-btn" id="showLoginBtn">로그인으로 돌아가기</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFRZFFaU4h-LMGcHwYYoni-SyuDY0-2k8",
+    authDomain: "where-is-this-ef31b.firebaseapp.com",
+    projectId: "where-is-this-ef31b",
+    storageBucket: "where-is-this-ef31b.firebasestorage.app",
+    messagingSenderId: "959623211817",
+    appId: "1:959623211817:web:96624f9be6a4297d8ba538"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app); 
+
+  function showToast(message) {
+    const toast = document.createElement("div");
+    toast.className = "toast-msg";
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add("show"), 100);
+    
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 400);
+    }, 2500);
+  }
+
+  const loginPanel = document.getElementById("loginPanel");
+  const signupPanel = document.getElementById("signupPanel");
+
+  document.getElementById("showSignupBtn").addEventListener("click", () => {
+    signupPanel.classList.add("active");
+    loginPanel.classList.remove("active");
+  });
+
+  document.getElementById("showLoginBtn").addEventListener("click", () => {
+    loginPanel.classList.add("active");
+    signupPanel.classList.remove("active");
+  });
+
+  document.getElementById("signupBtn").addEventListener("click", async () => {
+    const id = document.getElementById("signupId").value.trim();
+    const pw = document.getElementById("signupPw").value; 
+    const nick = document.getElementById("signupNick").value.trim(); 
+    
+    const school = document.getElementById("signupSchool").value.trim();
+    const gradeClass = document.getElementById("signupGradeClass").value.trim();
+
+    if (!id || !pw || !nick || !school || !gradeClass) {
+      return showToast("모든 칸을 채워주세요! ✍️");
+    }
+
+    const idRegex = /^[a-zA-Z0-9]+$/;
+    if (!idRegex.test(id)) {
+      return showToast("아이디는 영문자와 숫자만 사용할 수 있습니다. ❌");
+    }
+
+    const autoClassCode = `${school}${gradeClass}`;
+
+    const email = id.includes("@") ? id : `${id}@test.com`;
+
+    try {
+      const btn = document.getElementById("signupBtn");
+      btn.disabled = true;
+      btn.innerText = "가입 중...";
+
+      const userCredential = await createUserWithEmailAndPassword(auth, email, pw);
+      const user = userCredential.user;
+
+      await updateProfile(user, { displayName: nick });
+
+      await setDoc(doc(db, "users", user.uid), {
+        name: nick,
+        schoolName: school,
+        gradeClassName: gradeClass,
+        classCode: autoClassCode, 
+        email: email,
+        createdAt: new Date()
+      });
+
+      showToast(`🌟 ${nick}님, 가입 및 반 연동이 완료되었습니다!`);
+      setTimeout(() => { location.href = "home.html"; }, 1500);
+    } catch (error) {
+      console.error(error);
+      if (error.code === "auth/email-already-in-use") {
+        showToast("이미 존재하는 아이디입니다. 🧐");
+      } else {
+        showToast("가입 실패: 비밀번호를 6자리 이상 작성해 주세요.");
+      }
+      document.getElementById("signupBtn").disabled = false;
+      document.getElementById("signupBtn").innerText = "가입하기";
+    }
+  });
+
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const id = document.getElementById("loginId").value;
+    const pw = document.getElementById("loginPw").value;
+    const email = id.includes("@") ? id : `${id}@test.com`;
+
+    if (!id || !pw) return showToast("아이디와 비밀번호를 입력해주세요.");
+
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
+      showToast("반가워요! 로그인이 완료되었습니다. 🚀");
+      setTimeout(() => { location.href = "home.html"; }, 1200);
+    } catch (error) {
+      showToast("아이디 또는 비밀번호가 틀렸습니다. 🧐");
+    }
+  });
+</script>
+<script src="sound.js"></script>
+</body>
+</html>

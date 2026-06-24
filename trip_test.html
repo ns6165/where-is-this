@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>나의 경북 탐험가 성향 테스트</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Pretendard', Arial, sans-serif; background: #0f1720; }
+    .app { position: relative; width: 100vw; height: 100dvh; overflow: hidden; }
+    .bg-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+    .ui { position: absolute; inset: 0; z-index: 2; display: flex; justify-content: center; align-items: center; padding: 5vw; }
+    
+    .menu-card {
+      width: min(95vw, 38rem); 
+      max-height: 85vh;
+      padding: clamp(1.5rem, 3.5vw, 2.2rem);
+      border-radius: clamp(1.1rem, 3vw, 1.6rem);
+      background: rgba(248, 255, 250, 0.88);
+      box-shadow: 0 0.9rem 2rem rgba(34, 94, 54, 0.18);
+      backdrop-filter: blur(0.35rem);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .progress-wrap { width: 100%; background: #e0f2e9; height: 8px; border-radius: 10px; margin-bottom: 25px; overflow: hidden; }
+    .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #6db785, #3f8f5b); transition: width 0.3s ease; }
+    
+    .quiz-header { text-align: center; margin-bottom: 25px; }
+    .quiz-question { color: #2f4f38; font-weight: 900; font-size: clamp(1.1rem, 2.5vw, 1.3rem); line-height: 1.45; word-break: keep-all; }
+
+    .mbti-option-btn {
+      width: 100%;
+      border: 0.15rem solid #9fd3ad;
+      color: #2f4f38;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 14px;
+      padding: clamp(1.1rem, 3vw, 1.4rem) 15px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 10px rgba(63, 143, 91, 0.04);
+      margin-bottom: 15px;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+    .mbti-option-btn:hover { background: rgba(240, 252, 243, 0.98); border-color: #3f8f5b; }
+
+    .info-box { background: rgba(255, 255, 255, 0.92); border: 2px solid #9fd3ad; border-radius: 16px; padding: 18px; margin-bottom: 20px; }
+    .info-title { color: #3f8f5b; font-weight: 800; font-size: 0.95rem; margin-bottom: 4px; }
+    .info-desc { font-size: 0.9rem; color: #444; line-height: 1.5; margin-bottom: 10px; }
+
+    .btn-green {
+      width: 100%; border: none; color: #fff; padding: 15px; font-size: 1.05rem;
+      background: linear-gradient(180deg, #6db785 0%, #3f8f5b 100%);
+      font-weight: 800; cursor: pointer; border-radius: 10px; transition: transform 0.15s ease;
+      text-align: center;
+    }
+    
+    .back-btn {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      z-index: 100;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px); 
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+    .back-btn:active {
+      transform: scale(0.9);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <video class="bg-video" autoplay muted loop playsinline><source src="video/main.mp4" type="video/mp4" /></video>
+
+   <div class="back-btn" onclick="setTimeout(() => location.href='test.html', 200)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </div>
+
+    <div class="ui">
+      <div class="menu-card" id="quiz-panel">
+        <div class="progress-wrap"><div id="progress-bar" class="progress-bar"></div></div>
+        <div class="quiz-header">
+          <h2 id="q-text" class="quiz-question">질문을 불러오는 중...</h2>
+        </div>
+        <button class="mbti-option-btn" id="btn-a" onclick="select('A')"></button>
+        <button class="mbti-option-btn" id="btn-b" onclick="select('B')"></button>
+      </div>
+
+      <div class="menu-card" id="result-panel" style="display: none;">
+        <h2 style="color: #3f8f5b; text-align: center; margin-bottom: 15px;">나의 여행 취향 도시는?</h2>
+        <div class="info-box">
+          <h1 id="res-city" style="color: #2f4f38; text-align: center; margin-bottom: 15px;"></h1>
+          <div class="info-title">⛰️ 지형 특징</div><p id="desc-nature" class="info-desc"></p>
+          <div class="info-title">🏯 대표 문화 유산</div><p id="desc-history" class="info-desc"></p>
+        </div>
+<button class="btn-green" onclick="setTimeout(() => location.href='index.html', 200)">지도로 확인하기</button>      </div>
+    </div>
+  </div>
+
+  <script>
+    const cityDb = {
+      "포항시": { nature: "바다와 산업의 조화", history: "연오랑세오녀공원" },
+      "경주시": { nature: "천년 역사가 숨 쉬는 곳", history: "불국사, 석굴암" },
+      "김천시": { nature: "산맥 관문의 교통 중심", history: "직지사" },
+      "안동시": { nature: "강줄기가 흐르는 분지", history: "하회마을, 도산서원" },
+      "구미시": { nature: "낙동강과 산업의 공존", history: "금오산" },
+      "영주시": { nature: "유교 문화의 깊은 숲", history: "부석사, 소수서원" },
+      "영천시": { nature: "별과 전통의 도시", history: "임고서원" },
+      "상주시": { nature: "낙동강 따라 흐르는 평화", history: "경천대" },
+      "문경시": { nature: "산맥 고개의 액티브한 곳", history: "문경새재" },
+      "경산시": { nature: "넓은 평야와 교육도시", history: "반곡지" },
+      "군위군": { nature: "아기자기한 시골 풍경", history: "화본역" },
+      "의성군": { nature: "구릉성 내륙 지형", history: "조문국 박물관" },
+      "청송군": { nature: "청정 자연 산악 지형", history: "주왕산" },
+      "영양군": { nature: "자연 속 정적인 탐험지", history: "두들마을" },
+      "영덕군": { nature: "바닷길 탐험의 시작", history: "블루로드" },
+      "청도군": { nature: "감과 미나리의 미식지", history: "운문사" },
+      "고령군": { nature: "대가야의 숨결", history: "지산동 고분군" },
+      "성주군": { nature: "가야산 자락의 풍요", history: "세종대왕자태실" },
+      "칠곡군": { nature: "낙동강 방어와 평화", history: "호국평화기념관" },
+      "예천군": { nature: "내성천이 감싸는 곳", history: "회룡포" },
+      "봉화군": { nature: "백두대간 산악 지대", history: "청량사" },
+      "울진군": { nature: "해안 절경과 온천", history: "스카이레일" },
+      "울릉군": { nature: "신비로운 화산섬", history: "독도" }
+    };
+
+    const questions = [
+      {q:"여행 첫날! 창밖으로 어떤 풍경이 보이면 기쁠까?", a:"시원한 파도 소리 바다", b:"고요한 산속 계곡", wA:['포항시','경주시','영덕군','울진군','울릉군'], wB:['안동시','영주시','봉화군','문경시','김천시']},
+      {q:"전통시장에 가면 무엇을 살까?", a:"싱싱한 수산물", b:"신선한 고기/채소", wA:['포항시','영덕군','울진군','울릉군'], wB:['구미시','경산시','칠곡군','청도군','군위군']},
+      {q:"역사 유적지 탐방! 어디가 좋을까?", a:"황금빛 신라 유물", b:"선비의 서원/한옥", wA:['경주시','포항시'], wB:['안동시','영주시','봉화군']},
+      {q:"도착하자마자 하고 싶은 건?", a:"신나는 레일바이크/체험", b:"옛날이야기 공부/탐구", wA:['문경시','구미시','칠곡군'], wB:['안동시','의성군']},
+      {q:"여행의 기억 중 가장 좋은 것은?", a:"축제/신나는 파티", b:"조용한 풍경/사색", wA:['포항시','경주시'], wB:['청송군','영양군']},
+      {q:"지도를 보다가 가고 싶은 곳은?", a:"등대/섬", b:"평야/분지", wA:['울릉군','영덕군'], wB:['안동시','상주시']},
+      {q:"오늘 저녁 메뉴는?", a:"맛있는 생선 요리", b:"고기/국밥", wA:['포항시','울진군'], wB:['김천시','군위군','성주군']},
+      {q:"숙소 근처 풍경은?", a:"파도 소리 해변가", b:"물 흐르는 숲속", wA:['포항시','경주시'], wB:['김천시','성주군']},
+      {q:"여행지의 상징을 정한다면?", a:"떠오르는 일출", b:"알록달록 단풍", wA:['포항시','울진군'], wB:['영주시','봉화군']},
+      {q:"체험학습 스타일은?", a:"친구들과 조별 미션", b:"나홀로 추리 탐구", wA:['구미시','칠곡군'], wB:['상주시','의성군']},
+      {q:"간식으로 먹고 싶은 건?", a:"짭조름한 건어물", b:"달콤한 제철 과일", wA:['울릉군','영덕군'], wB:['성주군','청송군']},
+      {q:"음식 선택의 기준은?", a:"신선하고 싱싱한 맛", b:"든든하고 푸짐한 맛", wA:['포항시','울진군'], wB:['안동시','김천시']},
+      {q:"여행 친구와 한다면?", a:"협동해서 활동하기", b:"산책하며 대화하기", wA:['문경시','경산시'], wB:['안동시','봉화군']},
+      {q:"너의 성격을 한 마디로?", a:"에너지 활동가", b:"차분한 탐구자", wA:['포항시','문경시','구미시'], wB:['안동시','영주시','청송군']},
+      {q:"여행 마무리로 무엇을 할까?", a:" 아쉬우니 한 곳 더!", b:"여행 일기 정리", wA:['포항시','문경시'], wB:['안동시','상주시']},
+      {q:"역사 속 인물이 된다면?", a:"세상을 호령하는 장군", b:"학문을 닦는 청렴 선비", wA:['경주시','포항시'], wB:['안동시','영주시']},
+      {q:"박물관에서 볼 건?", a:"보물 전시관", b:"옛 지혜 전시관", wA:['경주시','포항시'], wB:['안동시','영주시']},
+      {q:"여행지 분위기는 어때야 할까?", a:" 화려하고 멋진 곳", b:"깔끔하고 단아한 곳", wA:['경주시','포항시'], wB:['안동시','영주시']},
+      {q:"마을 산책 풍경은?", a:" 성벽과 고분들", b:"돌담과 한옥들", wA:['경주시','고령군'], wB:['안동시','예천군']},
+      {q:"경북 이미지?", a:"천년의 미소", b:"선비의 기개", wA:['경주시','포항시'], wB:['안동시','봉화군']},
+      {q:"역사 이야기라면?", a:" 전쟁을 이긴 승리담", b:"지혜로운 학자들", wA:['경주시','고령군'], wB:['안동시','영주시']},
+      {q:"맑은 날 드라이브는?", a:" 시원한 바닷바람", b:"고요한 숲속 바람", wA:['포항시','영덕군'], wB:['봉화군','영양군']},
+      {q:"운전해서 떠난다면?", a:" 바다가 보이는 해안도로", b:"구불구불 산길", wA:['울진군','영덕군'], wB:['문경시','상주시']},
+      {q:"여름 여행지로는?", a:" 시원한 여름바다", b:"가을 분위기", wA:['포항시','울릉군'], wB:['영주시','문경시']},
+      {q:"쇼핑 리스트 1번은?", a:" 맛있는 젓갈", b:"동네 특산물", wA:['영덕군','울릉군'], wB:['의성군','성주군']},
+      {q:"식단의 완성은?", a:" 바다 향기 가득", b:"땅의 기운 가득", wA:['포항시','울진군'], wB:['상주시','예천군']},
+      {q:"건강식으로 좋다면?", a:" 해산물 식단", b:"산채비빔밥", wA:['포항시','영덕군'], wB:['청송군','영양군']},
+      {q:"라면에 넣어 먹고 싶은 건?", a:" 해물라면", b:"고기라면", wA:['포항시','영덕군'], wB:['김천시','구미시']},
+      {q:"더 가보고 싶은 역사 장소?", a:" 옛날 왕의 궁궐", b:"위대한 학자의 거처", wA:['경주시','포항시'], wB:['안동시','영주시']},
+      {q:"가방에 챙길 것은?", a:" 풍경 찍을 카메라", b:"궁금증 해결할 노트", wA:['포항시','경주시'], wB:['안동시','봉화군']}
+    ];
+
+    let scores = {};
+    Object.keys(cityDb).forEach(c => scores[c] = 0);
+    let pool = [...questions].sort(() => 0.5 - Math.random()).slice(0, 10);
+    let idx = 0;
+
+    function select(choice) {
+      const q = pool[idx];
+      const targets = (choice === 'A') ? q.wA : q.wB;
+      targets.forEach(city => scores[city]++);
+      idx++;
+      if(idx < 10) update(); else showResult();
+    }
+
+    function update() {
+      document.getElementById('q-text').innerText = pool[idx].q; 
+      document.getElementById('btn-a').innerText = pool[idx].a;
+      document.getElementById('btn-b').innerText = pool[idx].b;
+      document.getElementById('progress-bar').style.width = ((idx)/10)*100 + "%";
+    }
+
+    function showResult() {
+      const winner = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+      document.getElementById('quiz-panel').style.display = 'none';
+      document.getElementById('result-panel').style.display = 'block';
+      document.getElementById('res-city').innerText = "경상북도 " + winner;
+      document.getElementById('desc-nature').innerText = cityDb[winner].nature;
+      document.getElementById('desc-history').innerText = cityDb[winner].history;
+    }
+    update();
+  </script>
+<script src="sound.js"></script>
+</body>
+</html>
