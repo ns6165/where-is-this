@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>온정면 상세 탐방</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Pretendard", "Noto Sans KR", sans-serif; background: none; color: #1f2937; }
+    .app { position: relative; width: 100vw; height: 100dvh; overflow: hidden; }
+    .bg-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; pointer-events: none; }
+    .bg-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.12); z-index: 1; pointer-events: none; }
+    .page-wrap { position: absolute; inset: 0; z-index: 10; overflow-y: auto; padding: 24px; }
+    .page-frame { width: min(1200px, 100%); margin: 0 auto; background: linear-gradient(180deg, #f7fff8 0%, #eef8f0 100%); border-radius: 28px; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28); overflow: hidden; border: 1px solid rgba(255,255,255,0.18); }
+    .top-bar { display: flex; justify-content: flex-start; align-items: center; padding: 18px 22px; background: rgba(255,255,255,0.38); backdrop-filter: blur(6px); border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .back-btn { border: none; border-radius: 999px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; background: #ffffff; color: #3f8f5b; box-shadow: 0 6px 14px rgba(0,0,0,0.08); border: 1px solid #9fd3ad; }
+    .hero { padding: 32px 28px 24px; background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.42), transparent 28%), linear-gradient(135deg, #dff5e6 0%, #edf9f0 100%); border-bottom: 1px solid rgba(0,0,0,0.05); }
+    .title-wrap h1 { margin: 0; font-size: clamp(32px, 5vw, 52px); color: #2f4f38; letter-spacing: -1px; }
+    .title-wrap p { margin: 10px 0 0; color: #4d6353; font-size: 16px; font-weight: 600; }
+    .content { padding: 24px; }
+    .tab-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .tab-btn { border: none; border-radius: 999px; padding: 12px 18px; font-size: 15px; font-weight: 800; cursor: pointer; background: #e7f4eb; color: #3f8f5b; border: 1px solid #c9e5d2; }
+    .tab-btn.active { background: linear-gradient(180deg, #6db785 0%, #3f8f5b 100%); color: white; box-shadow: 0 8px 18px rgba(63, 143, 91, 0.22); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .grid-2 { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 18px; }
+    .card { background: rgba(255,255,255,0.88); border-radius: 24px; padding: 20px; box-shadow: 0 10px 24px rgba(0,0,0,0.07); border: 1px solid rgba(63,143,91,0.08); margin-bottom: 18px; }
+    .card h2 { margin: 0 0 12px; color: #2f4f38; font-size: 24px; }
+    .card h3 { margin: 0 0 12px; color: #2f4f38; font-size: 18px; }
+    .card p { margin: 0; font-size: 15px; line-height: 1.8; color: #4d6353; }
+    .image-frame { width: 100%; border-radius: 20px; overflow: hidden; background: #e2efe5; border: 2px solid #d6eadc; }
+    .main-image-frame { min-height: 260px; }
+    .map-image-frame { min-height: 180px; margin-top: 16px; }
+    .section-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .history-stack { display: flex; flex-direction: column; gap: 18px; }
+    .info-list { display: flex; flex-direction: column; gap: 14px; }
+    .info-item { background: #f6fcf7; border: 1px solid #dcefe1; border-radius: 18px; padding: 16px; }
+    .info-item .q { font-size: 14px; font-weight: 800; color: #3f8f5b; margin-bottom: 8px; }
+    .travel-layout { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 18px; align-items: start; }
+    .place-card { background: #f6fcf7; border: 1px solid #dcefe1; border-radius: 18px; padding: 16px; margin-bottom: 14px; }
+    .place-thumb { width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; object-fit: cover; display: block; margin-bottom: 12px; background: #dde9e0; }
+    .place-title { font-size: 16px; font-weight: 800; color: #2f4f38; margin-bottom: 8px; }
+    .place-desc { font-size: 14px; line-height: 1.7; color: #4d6353; }
+    .upload-btn { border: none; width: 100%; padding: 14px 16px; border-radius: 16px; font-size: 15px; font-weight: 800; cursor: pointer; margin-top: 14px; background: #ffffff; color: #3f8f5b; border: 1px solid #9fd3ad; }
+    .firebase-box { margin-top: 16px; padding: 16px; border-radius: 18px; background: #f6fcf7; border: 1px dashed #b9d5c1; color: #4d6353; font-size: 14px; }
+    @media (max-width: 980px) { .grid-2, .travel-layout { grid-template-columns: 1fr; } }
+  .toast-msg {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(63, 143, 91, 0.95);
+  color: white;
+  padding: 12px 25px;
+  border-radius: 50px;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.4s ease;
+  pointer-events: none;
+}
+.toast-msg.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.post-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.delete-btn { color: #e53e3e; margin-left: auto; }
+
+.comment-section {
+  margin-top: 10px;
+  background: #f9fcf9;
+  padding: 10px;
+  border-radius: 10px;
+}
+.comment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 4px;
+}
+.comment-input-group {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+.comment-input {
+  flex: 1;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  font-size: 12px;
+}
+.sort-btn {
+  cursor: pointer;
+  border: 1px solid #3f8f5b;
+  background: white;
+  color: #3f8f5b;
+  padding: 6px 12px;
+  border-radius: 6px; 
+  font-size: 12px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.sort-btn.active {
+  background: #3f8f5b;
+  color: white;
+}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <video class="bg-video" autoplay muted loop playsinline>
+      <source src="/video/background.mp4" type="video/mp4" />
+    </video>
+    <div class="bg-overlay"></div>
+
+    <div class="page-wrap">
+      <div class="page-frame">
+        <div class="top-bar">
+          <button class="back-btn" type="button" onclick="setTimeout(() => history.back(), 150)">← 울진 지도로 돌아가기</button>
+        </div>
+
+        <section class="hero">
+          <div class="title-wrap">
+            <h1>온정면</h1>
+            <p>온정면은 유서 깊은 백암온천과 장쾌한 백암산이 어우러진 힐링과 휴양의 고장</p>
+          </div>
+        </section>
+
+        <main class="content">
+          <div class="tab-bar">
+            <button class="tab-btn active" data-tab="tab1">우리 동네</button>
+            <button class="tab-btn" data-tab="tab2">우리 동네 역사</button>
+            <button class="tab-btn" data-tab="tab4">여행추천</button>
+          </div>
+
+          <section class="tab-panel active" id="tab1">
+            <div class="grid-2">
+              <div class="card">
+                <h2>우리 동네는 어떤 곳일까요?</h2>
+                <div class="image-frame main-image-frame">
+                  <img src="/images/uljin/온정면백암온천.jpg" alt="온정면백암온천" class="section-image" />
+                </div>
+                <div class="image-frame map-image-frame">
+                  <img src="/images/uljin/onjeongmeon.jpg" alt="온정면 지도" class="section-image" />
+                </div>
+              </div>
+              <div class="stack">
+                <div class="card">
+                  <h3>우리 동네 대표 장소</h3>
+                  <p>
+                    백암온천은 무색무취한 53℃의 천연 온천수로 유명한 대한민국 대표 휴양지입니다. 
+                    각종 성분이 함유되어 피부염과 부인병 등에 효험이 있으며, 조선 광해군 시절 문헌에도 기록될 만큼 깊은 역사를 자랑합니다. 
+                    온천으로 가는 길은 대한민국 최장 백일홍 꽃길로 인정받아 드라이브 코스로도 큰 인기를 끌고 있습니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="tab2">
+            <div class="history-stack">
+              <div class="card">
+                <h2>지명의 유래</h2>
+                <p>
+                  온정면(溫井面)은 **‘따뜻한(溫) 우물(井)’**, 즉 온천이 솟아나는 고장이라는 뜻에서 유래되었습니다. 
+                  예부터 백암산 기슭에서 솟아나는 온천수가 유명하여 붙여진 이름으로, 마을의 정체성이 온천과 깊이 연결되어 있습니다.
+                </p>
+              </div>
+              <div class="card">
+                <h2>역사</h2>
+                <div class="info-list">
+                  <div class="info-item">
+                    <div class="q">삼국 시대</div>
+                    <p>울진의 남쪽 내륙 지역으로서 백두대간의 정기를 이어받은 험준한 산세 덕분에 천혜의 요새 역할을 했습니다.</p>
+                  </div>
+                  <div class="info-item">
+                    <div class="q">조선 시대</div>
+                    <p>조선 광해군 시절(1610년) 판중추부사 기자헌이 풍질 치료를 위해 이곳에서 온천욕을 했다는 기록이 있을 만큼 왕실과 관리들에게도 소문난 효험의 땅이었습니다.</p>
+                  </div>
+                  <div class="info-item">
+                    <div class="q">현대</div>
+                    <p>1963년 강원도에서 경상북도로 소속이 바뀌었으며, 백암산과 신선계곡을 중심으로 한 산악 관광과 온천 휴양이 결합된 국민 관광지로 발전해 왔습니다.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <h2>주요 마을 이름 유래</h2>
+                <div class="info-list">
+                  <div class="info-item">
+                    <div class="q">소태리(小台里)</div>
+                    <p>온정면의 행정 중심지로, 산세가 수려하고 마을 뒤편에 큰 바위가 병풍처럼 둘러싸인 아늑한 마을입니다.</p>
+                  </div>
+                  <div class="info-item">
+                    <div class="q">온정리(溫井里)</div>
+                    <p>백암온천이 위치한 마을로, 지명 자체가 온천의 역사와 함께 시작된 상징적인 곳입니다.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="tab4">
+            <div class="travel-layout">
+              <div class="travel-main-box">
+                <h2>대표 추천 장소</h2>
+                <div class="featured-list">
+                  <div class="place-card">
+                    <img src="/images/uljin/온정면백암온천.jpg" alt="백암온천" class="place-thumb" />
+                    <div class="place-title">백암온천</div>
+                    <div class="place-desc">53℃ 천연 알칼리성 온천수로 지친 몸을 힐링할 수 있는 곳입니다. 오랜 역사와 효험을 자랑하며 대한민국 최장 백일홍 꽃길이 인근에 있어 사계절 내내 아름다운 풍경을 선사합니다.</div>
+                  </div>
+                  <div class="place-card">
+                    <img src="/images/uljin/온정면신선계곡.jpg" alt="신선계곡" class="place-thumb" />
+                    <div class="place-title">신선계곡 (선시골)</div>
+                    <div class="place-desc">백암산에서 흘러내리는 200여 개의 폭포와 소가 비경을 이루는 곳입니다. 금강송 숲과 용의 전설을 품은 용소 등 원시림의 정취를 만끽할 수 있는 트레킹 코스입니다.</div>
+                  </div>
+                  <div class="place-card">
+                    <img src="/images/uljin/온정면구주령.jpg" alt="구주령" class="place-thumb" />
+                    <div class="place-title">구주령 고갯길</div>
+                    <div class="place-desc">울진 온정과 영양 수비를 잇는 550m 높이의 환상적인 드라이브 코스입니다. 정상 휴게소에서 즐기는 풍경과 소원을 들어준다는 옥녀당의 이야기가 매력적입니다.</div>
+                  </div>
+                  <div class="place-card">
+                    <img src="/images/uljin/온정면백암산.jpg" alt="백암산" class="place-thumb" />
+                    <div class="place-title">백암산 (1,004m)</div>
+                    <div class="place-desc">낙동정맥의 웅장함을 품은 명산으로 천사(1,004m)의 높이를 가졌습니다. 백암폭포와 산성을 지나는 등산 코스는 온천욕과 함께 즐기기 좋은 최고의 웰빙 코스입니다.</div>
+                  </div>
+                </div>
+              </div>
+      <div class="travel-side-box card">
+        <h3>우리들의 추천 장소</h3>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+         <button id="sort-recent" class="sort-btn active">최신순</button>
+        <button id="sort-likes" class="sort-btn">인기순</button>  </div>
+        <div class="input-group" style="margin-bottom:15px;">
+          <div id="display-nickname" style="font-weight: 800; color: #3f8f5b; margin-bottom: 8px; font-size: 1.1rem;"></div>
+          <textarea id="user-comment" placeholder="우리 동네의 대표장소를 추천해봅시다!" style="width:100%; height:160px; border:1px solid #ddd; border-radius:8px; padding:15px; font-size:1rem; resize:none; line-height:1.5;"></textarea>
+        </div>
+       <div style="margin: 10px 0;">
+         <label for="photo-input" style="display:inline-block; cursor:pointer; background:#f0f7f2; padding:8px 15px; border-radius:10px; font-size:13px; border:1px solid #3f8f5b; color:#3f8f5b; font-weight:bold;">📸 사진 첨부하기</label>
+          <input type="file" id="photo-input" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+         <img id="image-preview" src="#" style="display:none; width:100%; border-radius:14px; margin-top:10px; border:1px solid #eee;">
+          </div>
+        <div class="student-list" id="post-list"></div>
+        <button class="upload-btn" id="student-upload-btn" type="button">추천 장소 남기기</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, doc, deleteDoc, updateDoc, increment, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFRZFFaU4h-LMGcHwYYoni-SyuDY0-2k8",
+    authDomain: "where-is-this-ef31b.firebaseapp.com",
+    projectId: "where-is-this-ef31b",
+    storageBucket: "where-is-this-ef31b.firebasestorage.app",
+    messagingSenderId: "959623211817",
+    appId: "1:959623211817:web:96624f9be6a4297d8ba538"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  const storage = getStorage(app);
+
+  const TOWN_NAME = "온정면"; 
+
+  let currentNick = "";
+  let unsubscribe = null;
+
+  function showToast(message) {
+    const toast = document.createElement("div");
+    toast.className = "toast-msg";
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 100);
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 400);
+    }, 2500);
+  }
+let selectedFile = null; 
+
+window.handleFileSelect = (e) => {
+  selectedFile = e.target.files[0];
+  const preview = document.getElementById("image-preview");
+  if (selectedFile) {
+    const reader = new FileReader();
+    reader.onload = (ex) => {
+      preview.src = ex.target.result;
+      preview.style.display = "block"; 
+    };
+    reader.readAsDataURL(selectedFile);
+  } else {
+    preview.style.display = "none";
+  }
+};
+  window.deletePost = async (postId) => {
+    if (confirm("정말 이 추천글을 삭제할까요?")) {
+      try {
+        await deleteDoc(doc(db, "recommendations", postId));
+        showToast("삭제되었습니다. 🗑️");
+      } catch (e) { console.error(e); }
+    }
+  };
+
+  window.likePost = async (postId) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    const postRef = doc(db, "recommendations", postId);
+    try {
+      const postSnap = await getDoc(postRef);
+      const postData = postSnap.data();
+      const isLiked = postData.likedBy && postData.likedBy.includes(user.uid);
+      if (isLiked) {
+        await updateDoc(postRef, { likes: increment(-1), likedBy: arrayRemove(user.uid) });
+        showToast("추천을 취소했습니다. 💔");
+      } else {
+        await updateDoc(postRef, { likes: increment(1), likedBy: arrayUnion(user.uid) });
+        showToast("추천 완료! 👍");
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  window.deleteComment = async (postId, commentIdx) => {
+    if (!confirm("댓글을 삭제하시겠습니까?")) return;
+    const postRef = doc(db, "recommendations", postId);
+    try {
+      const postSnap = await getDoc(postRef);
+      const comments = postSnap.data().comments;
+      const newComments = comments.filter((_, index) => index !== commentIdx);
+      await updateDoc(postRef, { comments: newComments });
+      showToast("댓글이 삭제되었습니다.");
+    } catch (e) { console.error(e); }
+  };
+
+  window.addComment = async (postId) => {
+    const input = document.getElementById(`comment-input-${postId}`);
+    if (!input.value) return showToast("댓글 내용을 입력해주세요!");
+    try {
+      const postRef = doc(db, "recommendations", postId);
+      await updateDoc(postRef, {
+        comments: arrayUnion({
+          writer: currentNick,
+          uid: auth.currentUser.uid,
+          text: input.value,
+          createdAt: new Date().toISOString()
+        })
+      });
+      input.value = "";
+      showToast("댓글이 등록되었습니다! 💬");
+    } catch (e) { console.error(e); }
+  };
+
+ function loadPosts(sortBy = "createdAt") {
+  if (unsubscribe) unsubscribe();
+  
+  let q;
+  if (sortBy === "likes") {
+    q = query(
+      collection(db, "recommendations"), 
+      where("town", "==", TOWN_NAME), 
+      orderBy("likes", "desc"),
+      orderBy("createdAt", "desc")
+    );
+  } else {
+    q = query(
+      collection(db, "recommendations"), 
+      where("town", "==", TOWN_NAME), 
+      orderBy("createdAt", "desc")
+    );
+  }
+
+  unsubscribe = onSnapshot(q, (snapshot) => {
+    const listDiv = document.getElementById("post-list");
+    if(!listDiv) return;
+    
+    listDiv.innerHTML = ""; 
+    
+    if (snapshot.empty) {
+      listDiv.innerHTML = "<div style='text-align:center; padding:20px; color:#999;'>첫 번째 추천글을 남겨보세요! 🌿</div>";
+      return;
+    }
+    
+    snapshot.forEach((postDoc) => {
+      const data = postDoc.data();
+      const postId = postDoc.id;
+      const isMyPost = data.uid === auth.currentUser?.uid;
+      
+      const commentHtml = (data.comments || []).map((c, index) => {
+        const isMyComment = c.uid === auth.currentUser?.uid;
+        return `
+          <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px;"><b style="color:#3f8f5b;">${c.writer}:</b> ${c.text}</span>
+            ${isMyComment ? `<button onclick="deleteComment('${postId}', ${index})" style="background:none; border:none; color:#e53e3e; cursor:pointer; font-size:10px;">✕</button>` : ""}
+          </div>`;
+      }).join("");
+
+      listDiv.innerHTML += `
+        <div class="place-card" style="margin-bottom:20px; border:1px solid #dcefe1; position:relative;">
+          <div style="color:#3f8f5b; font-size:14px; font-weight:bold;">${data.writer}님의 추천</div>
+          ${data.photo ? `<img src="${data.photo}" style="width:100%; border-radius:10px; margin:10px 0; border:1px solid #eee;">` : ""}
+          <div style="margin:10px 0; font-size:14px; line-height:1.5;">${data.text}</div>
+          <div class="post-actions">
+            <button class="action-btn" onclick="likePost('${postId}')">❤️ 추천 ${data.likes || 0}</button>
+            <button class="action-btn">💬 댓글 ${(data.comments || []).length}</button>
+            ${isMyPost ? `<button class="action-btn delete-btn" onclick="deletePost('${postId}')">지우기</button>` : ""}
+          </div>
+          <div class="comment-section" style="background:#f9fcf9; padding:10px; border-radius:10px; margin-top:10px;">
+            <div id="comments-${postId}">${commentHtml}</div>
+            <div class="comment-input-group" style="display:flex; gap:5px; margin-top:8px;">
+              <input type="text" id="comment-input-${postId}" class="comment-input" placeholder="댓글 달기..." style="flex:1; padding:5px; border-radius:5px; border:1px solid #ddd; font-size:12px;">
+              <button onclick="addComment('${postId}')" style="border:none; background:#3f8f5b; color:white; border-radius:4px; padding:4px 10px; cursor:pointer; font-size:12px;">등록</button>
+            </div>
+          </div>
+        </div>`;
+    });
+  }, (err) => {
+    console.error("쿼리 에러:", err);
+    if (err.code === 'failed-precondition') showToast("색인 설정이 일치하지 않습니다! ⏳");
+  });
+}
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentNick = user.displayName || user.email.split('@')[0];
+      document.getElementById("display-nickname").innerText = `✍️ 작성자: ${currentNick}`;
+      loadPosts("createdAt");
+    } else {
+      location.href = "start.html";
+    }
+  });
+
+  document.getElementById("sort-recent").onclick = () => {
+    loadPosts("createdAt");
+    document.getElementById("sort-recent").style.cssText = "background:#3f8f5b; color:white;";
+    document.getElementById("sort-likes").style.cssText = "background:white; color:#3f8f5b; border:1px solid #3f8f5b;";
+  };
+  document.getElementById("sort-likes").onclick = () => {
+    loadPosts("likes");
+    document.getElementById("sort-likes").style.cssText = "background:#3f8f5b; color:white;";
+    document.getElementById("sort-recent").style.cssText = "background:white; color:#3f8f5b; border:1px solid #3f8f5b;";
+  };
+document.getElementById("student-upload-btn").addEventListener("click", async () => {
+  const comment = document.getElementById("user-comment").value;
+  if (!comment) return showToast("추천 내용을 입력해주세요! ✍️");
+  
+  const btn = document.getElementById("student-upload-btn");
+  btn.disabled = true; 
+  btn.innerText = "업로드 중...";
+
+  try {
+    let photoURL = "";
+
+    if (selectedFile) {
+      const storageRef = ref(storage, `town_photos/${Date.now()}_${selectedFile.name}`);
+      const snapshot = await uploadBytes(storageRef, selectedFile);
+      photoURL = await getDownloadURL(snapshot.ref); 
+    }
+
+    await addDoc(collection(db, "recommendations"), {
+      town: TOWN_NAME,
+      writer: currentNick,
+      uid: auth.currentUser.uid,
+      text: comment,
+      photo: photoURL, 
+      likes: 0,
+      likedBy: [],
+      comments: [],
+      createdAt: new Date()
+    });
+
+    showToast("추천이 등록되었습니다! 🎉");
+    
+    document.getElementById("user-comment").value = "";
+    document.getElementById("photo-input").value = "";
+    document.getElementById("image-preview").style.display = "none";
+    selectedFile = null;
+    btn.disabled = false;
+    btn.innerText = "추천 등록하기";
+
+    setTimeout(() => loadPosts("createdAt"), 300);
+
+  } catch (e) {
+    console.error(e);
+    showToast("등록 실패. 다시 시도해주세요.");
+    btn.disabled = false;
+    btn.innerText = "추천 등록하기";
+  }
+});
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(btn.dataset.tab).classList.add("active");
+    });
+  });
+</script>
+<script src="/sound.js"></script>
+</body>
+</html>
