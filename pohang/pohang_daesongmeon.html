@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title> 대송면 상세 탐방</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Pretendard", "Noto Sans KR", sans-serif;
+      background: none;
+      color: #1f2937;
+    }
+
+    body {
+      padding: 0;
+    }
+
+    .app {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .bg-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.12);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .page-wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .page-wrap::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .page-wrap::-webkit-scrollbar-thumb {
+      background: rgba(63, 143, 91, 0.35);
+      border-radius: 999px;
+    }
+
+    .page-frame {
+      width: min(1200px, 100%);
+      margin: 0 auto;
+      background: linear-gradient(180deg, #f7fff8 0%, #eef8f0 100%);
+      border-radius: 28px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 18px 22px;
+      background: rgba(255,255,255,0.38);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .back-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      background: #ffffff;
+      color: #3f8f5b;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+      border: 1px solid #9fd3ad;
+    }
+
+    .back-btn:hover,
+    .tab-btn:hover,
+    .upload-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .hero {
+      padding: 32px 28px 24px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.42), transparent 28%),
+        linear-gradient(135deg, #dff5e6 0%, #edf9f0 100%);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.05;
+      color: #2f4f38;
+      letter-spacing: -1px;
+    }
+
+    .title-wrap p {
+      margin: 10px 0 0;
+      color: #4d6353;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .content {
+      padding: 24px;
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      background: #e7f4eb;
+      color: #3f8f5b;
+      transition: 0.18s ease;
+      border: 1px solid #c9e5d2;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(180deg, #6db785 0%, #3f8f5b 100%);
+      color: white;
+      box-shadow: 0 8px 18px rgba(63, 143, 91, 0.22);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.88);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.07);
+      border: 1px solid rgba(63,143,91,0.08);
+    }
+
+    .card h2,
+    .card h3 {
+      margin: 0 0 12px;
+      color: #2f4f38;
+      letter-spacing: -0.4px;
+    }
+
+    .card h2 {
+      font-size: 24px;
+    }
+
+    .card h3 {
+      font-size: 18px;
+    }
+
+    .card p,
+    .card li {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.8;
+      color: #4d6353;
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .image-frame {
+      width: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #e2efe5;
+      border: 2px solid #d6eadc;
+    }
+
+    .main-image-frame {
+      min-height: 260px;
+    }
+
+    .map-image-frame {
+      min-height: 180px;
+      margin-top: 16px;
+    }
+
+    .section-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .source-note {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #6b7280;
+      text-align: right;
+    }
+
+    .history-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .info-item {
+      background: #f6fcf7;
+      border: 1px solid #dcefe1;
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .info-item .q {
+      font-size: 14px;
+      font-weight: 800;
+      color: #3f8f5b;
+      margin-bottom: 8px;
+    }
+
+    .answer-status,
+    .travel-answer-box {
+      margin-top: 10px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #edf9f0;
+      color: #315c40;
+      line-height: 1.7;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .travel-layout {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .travel-main-box,
+    .travel-side-box {
+      background: rgba(255,255,255,0.88);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.07);
+      border: 1px solid rgba(63,143,91,0.08);
+    }
+
+    .travel-main-box h2,
+    .travel-side-box h3 {
+      margin: 0 0 12px;
+      color: #2f4f38;
+    }
+
+    .travel-main-box p,
+    .travel-side-box p {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.75;
+      color: #4d6353;
+    }
+
+    .featured-list,
+    .student-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .place-card {
+      background: #f6fcf7;
+      border: 1px solid #dcefe1;
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .place-thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 14px;
+      object-fit: cover;
+      display: block;
+      margin-bottom: 12px;
+      background: #dde9e0;
+    }
+
+    .place-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #2f4f38;
+      margin-bottom: 8px;
+    }
+
+    .place-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #4d6353;
+    }
+
+    .upload-btn {
+      border: none;
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 14px;
+      background: #ffffff;
+      color: #3f8f5b;
+      border: 1px solid #9fd3ad;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    }
+
+    .firebase-box {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #f6fcf7;
+      border: 1px dashed #b9d5c1;
+      color: #4d6353;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 980px) {
+      .page-wrap {
+        padding: 12px;
+      }
+
+      .grid-2,
+      .travel-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .content {
+        padding: 16px;
+      }
+
+      .hero {
+        padding: 24px 18px 18px;
+      }
+
+      .top-bar {
+        padding: 14px 16px;
+      }
+
+      .main-image-frame {
+        min-height: 220px;
+      }
+
+      .map-image-frame {
+        min-height: 160px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .tab-btn {
+        width: 100%;
+      }
+
+      .title-wrap h1 {
+        font-size: 34px;
+      }
+    }
+.toast-msg {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(63, 143, 91, 0.95);
+  color: white;
+  padding: 12px 25px;
+  border-radius: 50px;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.4s ease;
+  pointer-events: none;
+}
+.toast-msg.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.post-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.delete-btn { color: #e53e3e; margin-left: auto; }
+
+.comment-section {
+  margin-top: 10px;
+  background: #f9fcf9;
+  padding: 10px;
+  border-radius: 10px;
+}
+.comment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 4px;
+}
+.comment-input-group {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+.comment-input {
+  flex: 1;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  font-size: 12px;
+}
+.sort-btn {
+  cursor: pointer;
+  border: 1px solid #3f8f5b;
+  background: white;
+  color: #3f8f5b;
+  padding: 6px 12px;
+  border-radius: 6px; 
+  font-size: 12px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.sort-btn.active {
+  background: #3f8f5b;
+  color: white;
+}
+  </style>
+</head>
+<body>
+ <div class="app">
+    <video class="bg-video" autoplay muted loop playsinline>
+      <source src="/video/background.mp4" type="video/mp4" />
+    </video>
+    <div class="bg-overlay"></div>
+<div class="page-wrap">
+      <div class="page-frame">
+        <div class="top-bar">
+          <button class="back-btn" type="button" onclick="setTimeout(() => history.back(), 150)">← 포항 지도로 돌아가기</button>
+          </div>
+<section class="hero">
+  <div class="hero-top">
+    <div class="title-wrap">
+      <h1>대송면</h1>
+      <p>운제산의 장엄한 산세와 고승들의 정기를 품고, 영일 정씨 시조의 역사적 숨결 속에 상생하는 명당 고장</p>
+    </div>
+  </div>
+</section>
+
+<main class="content">
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="tab1">우리 동네</button>
+    <button class="tab-btn" data-tab="tab2">우리 동네 역사</button>
+    <button class="tab-btn" data-tab="tab4">대표 추천 장소</button>
+  </div>
+
+  <section class="tab-panel active" id="tab1">
+    <div class="grid-2">
+      <div class="card">
+        <h2>우리 동네는 어떤 곳일까요?</h2>
+        <div class="image-frame main-image-frame">
+          <img src="/images/pohang/daesong.jpg" alt="대송면 전체 지도" class="section-image" />
+        </div>
+        <div class="image-frame map-image-frame">
+          <img src="/images/pohang/대송면운제산산림욕장.jpg" alt="운제산 산림욕장 종합안내판 전경" class="section-image" />
+        </div>
+        <p class="source-note">출처: 포항시청 / 영일 정씨 종중</p>
+      </div>
+
+      <div class="stack">
+        <div class="card">
+          <h3>우리 동네 대표 장소: 역사와 신화가 살아 숨 쉬는 대자연의 치유 쉼터, 운제산 산림욕장</h3>
+          <p>
+            **대송면**의 상서로운 지맥을 이루는 운제산 자락에 아늑하게 터를 잡은 **운제산 산림욕장**은 풍부한 청정 자연림과 현대식 편의 인프라가 경이롭게 어우러진 우리 동네 최고의 산림 복합 문화 공간입니다. 공원 경내에는 푸른 가로수길과 숲속 쉼터가 정연하게 다듬어져 있으며, 유아숲체험원과 야외공연장, 족구장 등 남녀노소 함께 즐길 수 있는 복합 휴양 시설이 알차게 구축되어 있지요. 특히 주말마다 다채롭게 운영되는 목공예체험장의 가족 단위 프로그램이 수려한 인기를 자랑하며, 이른 아침 상쾌한 산바람과 솔향기를 맞으며 이웃들과 다정하게 사색하고 웰니스 휴식을 취하기에 최고의 명소 공간입니다.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="tab2">
+    <div class="history-stack">
+      <div class="card">
+        <h2>대송면 이름 속에 담긴 이야기</h2>
+        <p>
+          우리 동네 **대송(大松)**면은 지명 속에 하늘을 향해 기상 넘치게 푸르고 크게 뻗은 소나무의 전원 정기와 천년 사찰의 신비로운 신화 연혁을 고스란히 품고 있습니다. 향토 문헌 고증과 설화에 따르면 고을의 주산인 **운제산(478m)**은 신라 시대 원효대사가 원효암과 자장암을 명명하고 수도 포교를 할 당시, 기암절벽 계곡을 사이에 둔 두 암자를 신성한 구름 사다리다리로 오갔다는 전설에서 유래되었습니다. 또한 신라 제2대 남해왕비 운제부인의 성모단이 자리 잡고 있어 국태민안의 영험한 기운을 대대로 이어왔지요. 아울러 남성리에는 고려 시대 한림학사를 지낸 영일 정씨의 시조 형양공 정습명 선생의 상서로운 묘단과 재실인 남성재가 성터 중앙에 자리 잡아, 영남 가문의 올곧은 예절과 신의를 지켜온 문향의 자부심이 깃든 천하 제일의 명당 고장입니다 [cite: 남성재(南城齋)는 고려 의종(毅宗) 때 한림학사(翰林學士) 추밀원지주사(樞密院知奏事)를 지낸 영일(迎日) 정씨(鄭氏)의 시조(始祖)인 형양공(滎陽公) 정습명(鄭襲明 : ? ~ 1151)의 묘단하(墓壇下) 재숙지소(齋宿之所)이다., 대송면 남성리에는 이 지방의 대성인 영일정씨 시조인 정습명을 제향하는 남성재와 그의 신도비가 성터 중앙에 위치하고 있으며].
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>우리 동네 역사</h2>
+        <div class="info-list">
+          <div class="info-item">
+            <div class="q">삼국 및 통일신라 시대 (고승들의 운제산 수도와 신화적 모태 태동)</div>
+            <p>신라 천년의 신비 속에 자장, 원효, 혜공 등 위대한 고승들이 대송면의 영험한 운제산 기암절벽에서 은거하며 불교 수도 문화의 첫 장을 열었고, 남해왕비 운제부인의 성모단 정기와 함께 신화적 공동체가 태동했습니다 [cite: 운제산( 478m)은 원효대사가 원효암과 자장암을 명명하고 수도 포교할 때 계곡을 사이에 두고 두 암자가 기암절벽에 있어서 내왕이 어려워 구름다리로 서로 오가고 했다하여 붙인 이름이라고도 하며, 신라 제2대 남해왕비 운제부인의 성모단이 있어서 붙인 이름이라고도 한다., 과거에 자장, 원효, 혜공 등 고승들이 이산에서 수도하였다고 전해진다.].</p>
+          </div>
+          <div class="info-item">
+            <div class="q">고려 시대 (한림학사 정습명 선생의 제향과 영일 정씨 반촌 확립)</div>
+            <p>고려 의종 때 명신인 한림학사 추밀원지주사 정습명 선생의 영광스러운 연혁을 바탕으로 고을의 정신적 뼈대를 세웠습니다 [cite: 남성재(南城齋)는 고려 의종(毅宗) 때 한림학사(翰林學士) 추밀원지주사(樞密院知奏事)를 지낸 영일(迎日) 정씨(鄭氏)의 시조(始祖)인 형양공(滎陽公) 정습명(鄭襲明 : ? ~ 1151)의 묘단하(墓壇下) 재숙지소(齋宿之所)이다.]. 이후 영일 정씨 가문이 남성리를 중심으로 집성촌을 이루어 은거하며 세련된 선비 문화를 대대로 꽃피웠습니다.</p>
+          </div>
+          <div class="info-item">
+            <div class="q">조선 시대 (1722년 최초 묘단 축조와 1808년 남성재 객사 터 재이건)</div>
+            <p>실전되었던 시조의 묘역을 까치 전설의 계기로 고증하여 현청을 옮긴 후, 1722년 처음 묘단을 쌓았습니다. 지반이 약해 퇴락하던 구 재사를 보완하기 위해 1801년 옛 관청 객사 자리에 새로 공사를 시작하여 1808년 정당 3칸 규모의 현존하는 웅장한 남성재 모체를 완성했습니다 [cite: 옛 관청(官廳)의 객사(客舍)자리 터를 잡아 1801년에 공사를 시작하여 정당(正堂) 3칸, 재실 4칸으로 하고 부속(附屬)채까지 도합 14칸의 재사(齋舍)를 1808년까지 재이건(再移建)하여 완성하였는데 이것이 현존하는 남성재(南城齋)의 모체(母體)이다.].</p>
+          </div>
+          <div class="info-item">
+            <div class="q">구한말 및 근현대기 (고종조 대문채 가설과 가문 재실의 지속적 개축 연혁)</div>
+            <p>1868년(고종 무진년) 장엄한 대문채를 건립하며 가옥의 기품을 격상시켰고, 1897년과 1925년의 중수를 거쳐 1939년 동·서재 신축, 1965년 재사 개축 등 격동의 세월 속에서도 후손들이 뜻을 모아 소중한 문화재 연혁을 단단히 수호해 냈습니다 [cite: 1868년(고종 무진년 : 高宗 戊辰年)에 대문채를 건립하였다. 그 후로도 1897년, 1925년, 1928년의 중수기록이 있으며 1939년에는 동ㆍ서재를, 1962년 대문채, 1965년에는 재사를 개축하는 등 여러 차례의 중수(重修)와 개축(改築)이 이루어져 오늘에 이르고 있다.].</p>
+          </div>
+          <div class="info-item">
+            <div class="q">오늘날 (통합 포항시 대송면 정착 및 산림 복합 웰니스 공원 완성)</div>
+            <p>시·군 대통합 조례 고증에 따라 오늘날 스마트 행정과 녹색 주거가 상생하는 포항시 남구 대송면으로 완성되었습니다. 마을의 든든한 문화유산인 남성재와 정습명 묘소를 정연하게 보존하는 한편, 운제산 자락에 숲속 쉼터와 유아숲체험원을 갖춘 대단위 산림욕장 인프라를 성공적으로 개방하여 천년의 전통 유래 숨결과 미래형 스마트 웰니스 환경이 공존하는 명당으로 사랑받고 있습니다.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>동네 주요 장소 이름 유래</h2>
+        <div class="info-list">
+          <div class="info-item">
+            <div class="q">대송(大松·큰솔말)면 명칭의 유래</div>
+            <p>옛날 고을 평야지 도로망과 구릉지 주변에 사시사철 눈바람을 이겨내는 거대하고 푸른 소나무 조경수들이 울창하게 우거져, 주민들이 대대로 올곧은 선비의 절개와 화목한 풍요의 복을 일구어왔다는 데서 유래된 이름입니다.</p>
+          </div>
+          <div class="info-item">
+            <div class="q">남성(南城·성남마을)재 재실 터</div>
+            <p>남성리에 우뚝 선 유서 깊은 영일 정씨 가문의 재사 건축물로, 과거 조선 시대 지리학적 연혁상 오랜 옛 읍성(城)의 남(南)쪽 구퉁이 명당자리에 묘단과 객사 터전을 정밀하게 가설하여 조상을 정성스레 제향해 왔다는 데서 유래된 지명입니다 [cite: 영일(迎日) 정씨(鄭氏)의 시조(始祖)인 형양공(滎陽公) 정습명(鄭襲明 : ? ~ 1151)의 묘단하(墓壇下) 재숙지소(齋宿之所)이다., 조선 경종(景宗) 임인년(壬寅年, 1722년)에 읍성의 남쪽 구석에 후손들이 처음으로 묘단(묘단)을 쌓고, 단소(壇所) 아래 동쪽으로 멀지 않은 옛 관청(官廳)의 객사(客舍)자리].</p>
+          </div>
+          <div class="info-item">
+            <div class="q">까치고개 (정습명 묘역 어귀)</div>
+            <p>새로 부임하는 현감마다 비몽사몽간에 신령이 나타나 묘 터전을 비켜 현청을 옮기라 이른 옛터로, 유언에 따라 이튿날 새벽 맨 처음 땅 위에 날아와 앉은 길조 까치의 발자국 자취를 따라 정습명 선생의 영험한 묘역 위치를 정밀하게 밝혀냈다는 설화의 정겨운 지명입니다 [cite: 새로이 부임하는 현감마다 죽게되어 현감으로 부임하려는 사람이 없던 중, 비몽사몽간에 한 노인이 나타나 "내가 누운 자리에 무엄하게 현청을 지었으니 빨리 옮겨라.", "내일 새벽 일찍 까치가 한 마리 날아올 것이니 맨 처음 땅 위에 앉은 자리가 내가 묻힌 자리니라.", 까치소리에 놀라 깨어보니 까치는 벌써 여러 곳을 뛰어 다니고 있어서 정확한 위치를 알 수 없었으나 그 부근을 조사하여 정습명의 묘역임을 밝히고 현청을 옮겼으며].</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="tab4">
+    <div class="travel-layout">
+      <div class="travel-main-box">
+        <h2>대표 추천 장소</h2>
+        <div class="featured-list">
+         
+          <div class="place-card">
+            <img src="/images/pohang/대송면남성재.jpg" alt="대송면 남성재" class="place-thumb" />
+            <div class="place-title">남성재 영일정씨 시조재실길</div>
+            <div class="place-desc">고려 시대의 대들보 신하인 한림학사 정습명 선생을 제향하기 위해 1801년 옛 객사 자리에 착공하여 1808년 완성된 고풍스러운 목조 와가 역사 공간입니다 [cite: 남성재(NAMSUNGJAE)는 고려 의종(毅宗) 때 한림학사(翰林學士) 추밀원지주사(樞密院지주사)를 지낸 영일(迎日) 정씨(鄭氏)의 시조(始祖)인 형양공(滎陽公) 정습명(鄭襲明 : ? ~ 1151)의 묘단하(墓壇下) 재숙지소(齋宿지소)이다., 옛 관청(官廳)의 객사(客舍)자리에 터를 잡아 1801년에 공사를 시작하여 정당(正堂) 3칸, 재실 4칸으로 하고 부속(附屬)채까지 도합 14칸의 재사(齋舍)를 1808년까지 재이건(再移建)하여 완성하였는데]. 고종조에 축조된 기품 있는 대문채와 팔작지붕 구조의 전통 미학이 장관을 이루고 있어, 종중 선현들의 고결한 숨결을 조용히 사색하며 산책하기에 안성맞춤입니다.</div>
+          </div>
+
+          <div class="place-card">
+            <img src="/images/pohang/대송면정습명의 묘소.jpg" alt="대송면 정습명의 묘소" class="place-thumb" />
+            <div class="place-title">정습명 선생 묘역 성터길</div>
+            <div class="place-desc">대송면 남성리 옛 성터 중앙에 장엄하게 안착되어 영일 정씨 가문의 번창 연혁을 고스란히 증언하는 소중한 묘역 명소입니다. 새로 부임하던 조선 현감들의 신비로운 꿈 기록과 길조 까치 전설의 수려한 향토 이야기를 품고 있으며, 자연석 초석 문인석 조경 자취를 조망하며 역사 탐방로를 따라 걷기에 참 훌륭합니다 [cite: 새로이 부임하는 현감마다 죽게되어 현감으로 부임하려는 사람이 없던 중, 비몽사몽간에 한 노인이 나타나, "내일 새벽 일찍 까치가 한 마리 날아올 것이니 맨 처음 땅 위에 앉은 자리가 내가 묻힌 자리니라.", 그 부근을 조사하여 정습명의 묘역임을 밝히고].</div>
+          </div>
+
+          <div class="place-card">
+            <img src="/images/pohang/대송면운제산.jpg" alt="대송면 운제산" class="place-thumb" />
+            <div class="place-title">운제산 원효암 기암절벽길</div>
+            <div class="place-desc">해발 $478\text{m}$ 규모로 웅장하게 솟아올라 신라 시대 원효대사, 자장대사 등 고승들의 찬란한 도학 숨결을 전해주는 명산 등산로 코스입니다. 원효암과 자장암의 천인단애 기암절벽 조경과 울창하게 우거진 완충 수목림이 한 폭의 동양화 같은 절경을 선사하여, 탁 트인 고을 평야 전경을 감상하며 웰니스 트레킹을 즐기기에 더할 나위 없이 훌륭합니다.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="travel-side-box card">
+        <h3>우리들의 추천 장소</h3>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+         <button id="sort-recent" class="sort-btn active">최신순</button>
+        <button id="sort-likes" class="sort-btn">인기순</button>  </div>
+        <div class="input-group" style="margin-bottom:15px;">
+          <div id="display-nickname" style="font-weight: 800; color: #3f8f5b; margin-bottom: 8px; font-size: 1.1rem;"></div>
+          <textarea id="user-comment" placeholder="우리 동네의 대표장소를 추천해봅시다!" style="width:100%; height:160px; border:1px solid #ddd; border-radius:8px; padding:15px; font-size:1rem; resize:none; line-height:1.5;"></textarea>
+        </div>
+       <div style="margin: 10px 0;">
+         <label for="photo-input" style="display:inline-block; cursor:pointer; background:#f0f7f2; padding:8px 15px; border-radius:10px; font-size:13px; border:1px solid #3f8f5b; color:#3f8f5b; font-weight:bold;">📸 사진 첨부하기</label>
+          <input type="file" id="photo-input" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+         <img id="image-preview" src="#" style="display:none; width:100%; border-radius:14px; margin-top:10px; border:1px solid #eee;">
+          </div>
+        <div class="student-list" id="post-list"></div>
+        <button class="upload-btn" id="student-upload-btn" type="button">추천 장소 남기기</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, doc, deleteDoc, updateDoc, increment, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFRZFFaU4h-LMGcHwYYoni-SyuDY0-2k8",
+    authDomain: "where-is-this-ef31b.firebaseapp.com",
+    projectId: "where-is-this-ef31b",
+    storageBucket: "where-is-this-ef31b.firebasestorage.app",
+    messagingSenderId: "959623211817",
+    appId: "1:959623211817:web:96624f9be6a4297d8ba538"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  const storage = getStorage(app);
+
+  const TOWN_NAME = "대송면"; 
+
+  let currentNick = "";
+  let unsubscribe = null;
+
+  function showToast(message) {
+    const toast = document.createElement("div");
+    toast.className = "toast-msg";
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 100);
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 400);
+    }, 2500);
+  }
+let selectedFile = null; 
+
+window.handleFileSelect = (e) => {
+  selectedFile = e.target.files[0];
+  const preview = document.getElementById("image-preview");
+  if (selectedFile) {
+    const reader = new FileReader();
+    reader.onload = (ex) => {
+      preview.src = ex.target.result;
+      preview.style.display = "block"; 
+    };
+    reader.readAsDataURL(selectedFile);
+  } else {
+    preview.style.display = "none";
+  }
+};
+  window.deletePost = async (postId) => {
+    if (confirm("정말 이 추천글을 삭제할까요?")) {
+      try {
+        await deleteDoc(doc(db, "recommendations", postId));
+        showToast("삭제되었습니다. 🗑️");
+      } catch (e) { console.error(e); }
+    }
+  };
+
+  window.likePost = async (postId) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    const postRef = doc(db, "recommendations", postId);
+    try {
+      const postSnap = await getDoc(postRef);
+      const postData = postSnap.data();
+      const isLiked = postData.likedBy && postData.likedBy.includes(user.uid);
+      if (isLiked) {
+        await updateDoc(postRef, { likes: increment(-1), likedBy: arrayRemove(user.uid) });
+        showToast("추천을 취소했습니다. 💔");
+      } else {
+        await updateDoc(postRef, { likes: increment(1), likedBy: arrayUnion(user.uid) });
+        showToast("추천 완료! 👍");
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  window.deleteComment = async (postId, commentIdx) => {
+    if (!confirm("댓글을 삭제하시겠습니까?")) return;
+    const postRef = doc(db, "recommendations", postId);
+    try {
+      const postSnap = await getDoc(postRef);
+      const comments = postSnap.data().comments;
+      const newComments = comments.filter((_, index) => index !== commentIdx);
+      await updateDoc(postRef, { comments: newComments });
+      showToast("댓글이 삭제되었습니다.");
+    } catch (e) { console.error(e); }
+  };
+
+  window.addComment = async (postId) => {
+    const input = document.getElementById(`comment-input-${postId}`);
+    if (!input.value) return showToast("댓글 내용을 입력해주세요!");
+    try {
+      const postRef = doc(db, "recommendations", postId);
+      await updateDoc(postRef, {
+        comments: arrayUnion({
+          writer: currentNick,
+          uid: auth.currentUser.uid,
+          text: input.value,
+          createdAt: new Date().toISOString()
+        })
+      });
+      input.value = "";
+      showToast("댓글이 등록되었습니다! 💬");
+    } catch (e) { console.error(e); }
+  };
+
+ function loadPosts(sortBy = "createdAt") {
+  if (unsubscribe) unsubscribe();
+  
+  let q;
+  if (sortBy === "likes") {
+    q = query(
+      collection(db, "recommendations"), 
+      where("town", "==", TOWN_NAME), 
+      orderBy("likes", "desc"),
+      orderBy("createdAt", "desc")
+    );
+  } else {
+    q = query(
+      collection(db, "recommendations"), 
+      where("town", "==", TOWN_NAME), 
+      orderBy("createdAt", "desc")
+    );
+  }
+
+  unsubscribe = onSnapshot(q, (snapshot) => {
+    const listDiv = document.getElementById("post-list");
+    if(!listDiv) return;
+    
+    listDiv.innerHTML = ""; 
+    
+    if (snapshot.empty) {
+      listDiv.innerHTML = "<div style='text-align:center; padding:20px; color:#999;'>첫 번째 추천글을 남겨보세요! 🌿</div>";
+      return;
+    }
+    
+    snapshot.forEach((postDoc) => {
+      const data = postDoc.data();
+      const postId = postDoc.id;
+      const isMyPost = data.uid === auth.currentUser?.uid;
+      
+      const commentHtml = (data.comments || []).map((c, index) => {
+        const isMyComment = c.uid === auth.currentUser?.uid;
+        return `
+          <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px;"><b style="color:#3f8f5b;">${c.writer}:</b> ${c.text}</span>
+            ${isMyComment ? `<button onclick="deleteComment('${postId}', ${index})" style="background:none; border:none; color:#e53e3e; cursor:pointer; font-size:10px;">✕</button>` : ""}
+          </div>`;
+      }).join("");
+
+      listDiv.innerHTML += `
+        <div class="place-card" style="margin-bottom:20px; border:1px solid #dcefe1; position:relative;">
+          <div style="color:#3f8f5b; font-size:14px; font-weight:bold;">${data.writer}님의 추천</div>
+          ${data.photo ? `<img src="${data.photo}" style="width:100%; border-radius:10px; margin:10px 0; border:1px solid #eee;">` : ""}
+          <div style="margin:10px 0; font-size:14px; line-height:1.5;">${data.text}</div>
+          <div class="post-actions">
+            <button class="action-btn" onclick="likePost('${postId}')">❤️ 추천 ${data.likes || 0}</button>
+            <button class="action-btn">💬 댓글 ${(data.comments || []).length}</button>
+            ${isMyPost ? `<button class="action-btn delete-btn" onclick="deletePost('${postId}')">지우기</button>` : ""}
+          </div>
+          <div class="comment-section" style="background:#f9fcf9; padding:10px; border-radius:10px; margin-top:10px;">
+            <div id="comments-${postId}">${commentHtml}</div>
+            <div class="comment-input-group" style="display:flex; gap:5px; margin-top:8px;">
+              <input type="text" id="comment-input-${postId}" class="comment-input" placeholder="댓글 달기..." style="flex:1; padding:5px; border-radius:5px; border:1px solid #ddd; font-size:12px;">
+              <button onclick="addComment('${postId}')" style="border:none; background:#3f8f5b; color:white; border-radius:4px; padding:4px 10px; cursor:pointer; font-size:12px;">등록</button>
+            </div>
+          </div>
+        </div>`;
+    });
+  }, (err) => {
+    console.error("쿼리 에러:", err);
+    if (err.code === 'failed-precondition') showToast("색인 설정이 일치하지 않습니다! ⏳");
+  });
+}
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentNick = user.displayName || user.email.split('@')[0];
+      document.getElementById("display-nickname").innerText = `✍️ 작성자: ${currentNick}`;
+      loadPosts("createdAt");
+    } else {
+      location.href = "start.html";
+    }
+  });
+
+  document.getElementById("sort-recent").onclick = () => {
+    loadPosts("createdAt");
+    document.getElementById("sort-recent").style.cssText = "background:#3f8f5b; color:white;";
+    document.getElementById("sort-likes").style.cssText = "background:white; color:#3f8f5b; border:1px solid #3f8f5b;";
+  };
+  document.getElementById("sort-likes").onclick = () => {
+    loadPosts("likes");
+    document.getElementById("sort-likes").style.cssText = "background:#3f8f5b; color:white;";
+    document.getElementById("sort-recent").style.cssText = "background:white; color:#3f8f5b; border:1px solid #3f8f5b;";
+  };
+document.getElementById("student-upload-btn").addEventListener("click", async () => {
+  const comment = document.getElementById("user-comment").value;
+  if (!comment) return showToast("추천 내용을 입력해주세요! ✍️");
+  
+  const btn = document.getElementById("student-upload-btn");
+  btn.disabled = true; 
+  btn.innerText = "업로드 중...";
+
+  try {
+    let photoURL = "";
+
+    if (selectedFile) {
+      const storageRef = ref(storage, `town_photos/${Date.now()}_${selectedFile.name}`);
+      const snapshot = await uploadBytes(storageRef, selectedFile);
+      photoURL = await getDownloadURL(snapshot.ref); 
+    }
+
+    await addDoc(collection(db, "recommendations"), {
+      town: TOWN_NAME,
+      writer: currentNick,
+      uid: auth.currentUser.uid,
+      text: comment,
+      photo: photoURL, 
+      likes: 0,
+      likedBy: [],
+      comments: [],
+      createdAt: new Date()
+    });
+
+    showToast("추천이 등록되었습니다! 🎉");
+    
+    document.getElementById("user-comment").value = "";
+    document.getElementById("photo-input").value = "";
+    document.getElementById("image-preview").style.display = "none";
+    selectedFile = null;
+    btn.disabled = false;
+    btn.innerText = "추천 등록하기";
+
+    setTimeout(() => loadPosts("createdAt"), 300);
+
+  } catch (e) {
+    console.error(e);
+    showToast("등록 실패. 다시 시도해주세요.");
+    btn.disabled = false;
+    btn.innerText = "추천 등록하기";
+  }
+});
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(btn.dataset.tab).classList.add("active");
+    });
+  });
+</script>
+<script src="/sound.js"></script>
+</body>
+</html>
