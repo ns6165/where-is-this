@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title> 정평동 상세 탐방</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Pretendard", "Noto Sans KR", sans-serif;
+      background: none;
+      color: #1f2937;
+    }
+
+    body {
+      padding: 0;
+    }
+
+    .app {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .bg-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.12);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .page-wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .page-wrap::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .page-wrap::-webkit-scrollbar-thumb {
+      background: rgba(63, 143, 91, 0.35);
+      border-radius: 999px;
+    }
+
+    .page-frame {
+      width: min(1200px, 100%);
+      margin: 0 auto;
+      background: linear-gradient(180deg, #f7fff8 0%, #eef8f0 100%);
+      border-radius: 28px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 18px 22px;
+      background: rgba(255,255,255,0.38);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .back-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      background: #ffffff;
+      color: #3f8f5b;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+      border: 1px solid #9fd3ad;
+    }
+
+    .back-btn:hover,
+    .tab-btn:hover,
+    .upload-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .hero {
+      padding: 32px 28px 24px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.42), transparent 28%),
+        linear-gradient(135deg, #dff5e6 0%, #edf9f0 100%);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.05;
+      color: #2f4f38;
+      letter-spacing: -1px;
+    }
+
+    .title-wrap p {
+      margin: 10px 0 0;
+      color: #4d6353;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .content {
+      padding: 24px;
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      background: #e7f4eb;
+      color: #3f8f5b;
+      transition: 0.18s ease;
+      border: 1px solid #c9e5d2;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(180deg, #6db785 0%, #3f8f5b 100%);
+      color: white;
+      box-shadow: 0 8px 18px rgba(63, 143, 91, 0.22);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.88);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.07);
+      border: 1px solid rgba(63,143,91,0.08);
+    }
+
+    .card h2,
+    .card h3 {
+      margin: 0 0 12px;
+      color: #2f4f38;
+      letter-spacing: -0.4px;
+    }
+
+    .card h2 {
+      font-size: 24px;
+    }
+
+    .card h3 {
+      font-size: 18px;
+    }
+
+    .card p,
+    .card li {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.8;
+      color: #4d6353;
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .image-frame {
+      width: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #e2efe5;
+      border: 2px solid #d6eadc;
+    }
+
+    .main-image-frame {
+      min-height: 260px;
+    }
+
+    .map-image-frame {
+      min-height: 180px;
+      margin-top: 16px;
+    }
+
+    .section-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .source-note {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #6b7280;
+      text-align: right;
+    }
+
+    .history-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .info-item {
+      background: #f6fcf7;
+      border: 1px solid #dcefe1;
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .info-item .q {
+      font-size: 14px;
+      font-weight: 800;
+      color: #3f8f5b;
+      margin-bottom: 8px;
+    }
+
+    .answer-status,
+    .travel-answer-box {
+      margin-top: 10px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #edf9f0;
+      color: #315c40;
+      line-height: 1.7;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .travel-layout {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .travel-main-box,
+    .travel-side-box {
+      background: rgba(255,255,255,0.88);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.07);
+      border: 1px solid rgba(63,143,91,0.08);
+    }
+
+    .travel-main-box h2,
+    .travel-side-box h3 {
+      margin: 0 0 12px;
+      color: #2f4f38;
+    }
+
+    .travel-main-box p,
+    .travel-side-box p {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.75;
+      color: #4d6353;
+    }
+
+    .featured-list,
+    .student-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .place-card {
+      background: #f6fcf7;
+      border: 1px solid #dcefe1;
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .place-thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 14px;
+      object-fit: cover;
+      display: block;
+      margin-bottom: 12px;
+      background: #dde9e0;
+    }
+
+    .place-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #2f4f38;
+      margin-bottom: 8px;
+    }
+
+    .place-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #4d6353;
+    }
+
+    .upload-btn {
+      border: none;
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 14px;
+      background: #ffffff;
+      color: #3f8f5b;
+      border: 1px solid #9fd3ad;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    }
+
+    .firebase-box {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #f6fcf7;
+      border: 1px dashed #b9d5c1;
+      color: #4d6353;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 980px) {
+      .page-wrap {
+        padding: 12px;
+      }
+
+      .grid-2,
+      .travel-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .content {
+        padding: 16px;
+      }
+
+      .hero {
+        padding: 24px 18px 18px;
+      }
+
+      .top-bar {
+        padding: 14px 16px;
+      }
+
+      .main-image-frame {
+        min-height: 220px;
+      }
+
+      .map-image-frame {
+        min-height: 160px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .tab-btn {
+        width: 100%;
+      }
+
+      .title-wrap h1 {
+        font-size: 34px;
+      }
+    }
+.toast-msg {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(63, 143, 91, 0.95);
+  color: white;
+  padding: 12px 25px;
+  border-radius: 50px;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.4s ease;
+  pointer-events: none;
+}
+.toast-msg.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.post-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.delete-btn { color: #e53e3e; margin-left: auto; }
+
+.comment-section {
+  margin-top: 10px;
+  background: #f9fcf9;
+  padding: 10px;
+  border-radius: 10px;
+}
+.comment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 4px;
+}
+.comment-input-group {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+.comment-input {
+  flex: 1;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  font-size: 12px;
+}
+.sort-btn {
+  cursor: pointer;
+  border: 1px solid #3f8f5b;
+  background: white;
+  color: #3f8f5b;
+  padding: 6px 12px;
+  border-radius: 6px; 
+  font-size: 12px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.sort-btn.active {
+  background: #3f8f5b;
+  color: white;
+}
+  </style>
+</head>
+<body>
+ <div class="app">
+    <video class="bg-video" autoplay muted loop playsinline>
+      <source src="/video/background.mp4" type="video/mp4" />
+    </video>
+    <div class="bg-overlay"></div>
+<div class="page-wrap">
+      <div class="page-frame">
+        <div class="top-bar">
+          <button class="back-btn" type="button" onclick="setTimeout(() => history.back(), 150)">← 경산 지도로 돌아가기</button>
+          </div>
+<section class="hero">
+  <div class="hero-top">
+    <div class="title-wrap">
+      <h1>정평동</h1>
+      <p>남천의 청정 물길을 품고, 정평역의 역세권 활력과 평온한 전원 풍요 속에 상생하는 명당 고장</p>
+    </div>
+  </div>
+</section>
+
+<main class="content">
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="tab1">우리 동네</button>
+    <button class="tab-btn" data-tab="tab2">우리 동네 역사</button>
+    <button class="tab-btn" data-tab="tab4">대표 추천 장소</button>
+  </div>
+
+  <section class="tab-panel active" id="tab1">
+    <div class="grid-2">
+      <div class="card">
+        <h2>우리 동네는 어떤 곳일까요?</h2>
+        <div class="image-frame main-image-frame">
+          <img src="/images/gyeongsan/jeongpyeong.jpg" alt="정평동 전체 지도" class="section-image" />
+        </div>
+      
+        <p class="source-note">출처: 경산시청 / NAVER 지도</p>
+      </div>
+
+      <div class="stack">
+        <div class="card">
+          <h3>우리 동네 대표 장소: 맑은 물소리와 갈대숲 조경이 흐르는 쉼터, 남천천 정평지구 하안생태수변길</h3>
+          <p>
+            **정평동**의 동편 경계를 유유히 관류하며 정평하늘채리버파크와 정평초등학교 배후를 아늑하게 감싸 안은 **남천천 수변길**은 조선 시대부터 고을의 옥토 평야에 마르지 않는 젖줄을 대어주던 천혜의 수자원이자, 오늘날 동민들의 웰니스 일상을 책임지는 우리 동네 최고의 역사적 생태 거점 공간입니다. 사방으로 탁 트인 청정 하천 평야 한가운데를 가로지르는 이 제방 둑길은, 현대식 고층 아파트 단지의 역동적인 도심 소음 속에서도 푸른 대자연의 서정적인 정취를 온전히 사수해 온 정평동의 소중한 허파이지요. 강변을 따라 정밀하게 가꾸어진 완충 갈대숲 조경과 안전한 보행 데크로드가 한 폭의 동양화 같은 장관을 자아내며, 시원한 강바람을 맞으며 이웃들과 산책하고 웰니스 힐링을 누리기에 최고의 명소 공간입니다.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="tab2">
+    <div class="history-stack">
+      <div class="card">
+        <h2>정평동 이름 속에 담긴 이야기</h2>
+        <p>
+          우리 동네 **정평(正坪)**동은 지명 속에 드넓고 평평한 충적 벌판의 정기와 대대로 성품이 올곧고 의리를 지켜온 주민들의 오랜 역사적 자부심을 고스란히 품고 있습니다. 향토 문헌 고증에 따르면 '정평'이라는 지명은 **조선 시대 경산현 관할 시절, 남천천 물길 연안에 터를 잡아 지형이 바둑판처럼 평평(坪)하고 기름진 명당 고을이자, 주민들이 서로 시비 없이 정직하고 정의(正)로운 미덕을 베풀며 상생의 터전을 일구었다**는 데서 유래되었습니다. 고대부족 국가 압독국의 중심 농경지로서 풍부한 수자원을 바탕으로 풍요로운 영농 공동체를 이루었으며, 대구 대동 지구 및 사월역 경계 도로망과 편리하게 인접하여 물산 교류의 중추적인 역할을 담당해 왔지요. 1914년 대통합을 거쳐 정평하늘채리버파크, 태왕귀빈타운 등 현대식 스마트 주거 인프라를 성공적으로 안착시키며, 천년의 소박한 전통 유래 숨결과 편리한 도심 문화가 상생하는 고장입니다.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>우리 동네 역사</h2>
+        <div class="info-list">
+          <div class="info-item">
+            <div class="q">삼한 및 삼국 시대 (압독국 서부 요충지와 남천 평야의 태동)</div>
+            <p>고대 삼한 시대 부족 국가인 압독국의 비옥한 농경 벌판 평야지로서 남천천의 풍부한 청정 수자원을 기반으로 전원 주거 공동체가 태동했습니다. 사방으로 흐르는 물길이 땅을 기름지게 하여 일찍부터 토착 부락들이 자리를 잡고 영농 역사의 첫 장을 열었습니다.</p>
+          </div>
+          <div class="info-item">
+            <div class="q">조선 시대 (경산현 서면 관할과 정평 반촌의 번창)</div>
+            <p>조선 후기 지방 행정 구역 개편 고증에 따라 경산현 관할하에 '정평리'로 명확히 정립되었습니다. 남천의 맑은 용수가 거친 가뭄을 막아주어 사철 미곡 대농을 일구었고, 문중들이 가옥 집성촌을 이루어 은거하며 예절과 신의를 지키고 인심 후한 선비 문화를 꽃피웠습니다.</p>
+          </div>
+          <div class="info-item">
+            <div class="q">근대 초기 (1914년 행정 통폐합과 서부면 통합 연혁)</div>
+            <p>1914년 총독부령 행정구역 대개편 고증에 따라 주변의 소박한 자연 부락 자취들을 정밀하게 대통합하여 복 가득한 '경산군 서부면 정평동'으로 연혁을 당당히 확립했습니다. 이 시기 남천 제방 둑길과 대구 경계 국도선 도로망의 뼈대가 다듬어졌습니다.</p>
+          </div>
+          <div class="info-item">
+            <div class="q">1990년대~2000년대 초기 (대단위 주거단지 가설과 지하철 역세권 대격변)</div>
+            <p>정평동 역사에서 고을의 지형을 가장 세련되고 복합적으로 재편한 대전환기입니다. 대왕귀빈타운 등 대단위 아파트 가옥 인프라가 성공적으로 안착되었고, 대구도시철도 2호선 정평역 교통 허브망이 전격 개통·가동되면서 사통팔달 역세권 명당 주거지로 대도약했습니다.</p>
+          </div>
+          <div class="info-item">
+            <div class="q">오늘날 (통합 경산시 정평동 완성 및 스마트 미래형 웰니스 도시 완성)</div>
+            <p>시·군 대통합 조례 고증에 따라 오늘날 경산 교통과 주거의 핵심 대들보인 '서부2동(西部2동)' 관할의 핵심 법정동으로 상생 정립되었습니다. 정평초등학교 등 명품 학군과 경북대구낙농농협 상권을 정착시켰으며, 남천천 하안생태수변로를 정밀하게 가꾸어 천년의 유래 숨결과 현대식 스마트 웰니스 환경이 아름답게 공존하는 경산 최고의 명당으로 사랑받고 있습니다.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>동네 주요 장소 이름 유래</h2>
+        <div class="info-list">
+          <div class="info-item">
+            <div class="q">정평(正坪·바른벌)동 명칭의 유래</div>
+            <p>옛날 남천 평야 한가운데에 드넓게 펼쳐진 비옥하고 평평한 벌판(坪)이자, 고을 주민들이 심성이 정직하고 올바른(正) 도덕과 신의를 준수해 왔다는 뜻의 자부심 높은 이름입니다.</p>
+          </div>
+          <div class="info-item">
+            <div class="q">정평(正坪)역 교통 거점</div>
+            <p>동네 중심가를 관통하는 현대식 지하철역으로, 옛날 영남 대로를 오가던 나그네들과 장꾼들이 남천 맑은 물길을 건너 경산 고을로 진입하기 전 편리하게 여정을 다듬던 전통 어귀 길목의 연혁을 계승한 현대적 교통의 대들보 지명입니다.</p>
+          </div>
+          <div class="info-item">
+            <div class="q">귀빈 벌판 사잇길</div>
+            <p>현재의 태왕귀빈타운 아파트와 정평초등학교 사이에 펼쳐진 옛터로, 과거 영농 시절 가뭄과 수해 없이 사철 풍요로운 수확을 거두어 고을을 방문한 귀한 손님(貴賓)들을 넉넉하게 대접하고 풍악을 즐겼다는 유래의 정겨운 지명입니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="tab-panel" id="tab4">
+    <div class="travel-layout">
+      <div class="travel-main-box">
+        <h2>대표 추천 장소</h2>
+        <div class="featured-list">
+     
+          <div class="place-card">
+            <div class="place-title">정평초등학교 청운관 교육사잇길</div>
+            <div class="place-desc">정평동 남동쪽 명당 자락에 위치하여 자라나는 어린이들의 명품 교육을 담당해 온 정평초교 청운관 배후의 수목 가로수길입니다. 세련되게 정비된 인도 블록 인프라와 보행로가 깔끔하게 정착되어 있어, 이웃들과 함께 조용히 산책하며 건강을 다지기에 참 훌륭합니다.</div>
+          </div>
+
+          <div class="place-card">
+            <div class="place-title">정평동 전통문화 옛 고을사잇길</div>
+            <div class="place-desc">조선 시대 경산현 정평리 시절부터 비옥한 하안 평야를 따라 고을 주민들이 서로 양보하고 베풀며 상생의 터전을 일구어온 유서 깊은 골목길입니다. 아파트 가옥 사잇길을 따라 정겨운 고향 인심이 흐르고 있어 예쁜 추억을 남기며 걷기에 안성맞춤입니다.</div>
+          </div>
+
+          <div class="place-card">
+            <div class="place-title">대구2호선 정평역 역세권 문화길</div>
+            <div class="place-desc">정평동 중심가를 동서로 관통하며 사통팔달로 시원하게 뻗은 스마트 도심의 중심 거리 인프라입니다. 도로망을 따라 깔끔하게 정비된 가로수길 조경과 상권 구역이 경이롭게 조화를 이루고 있으며, 역동적인 경제 발전을 관찰하며 가볍게 산책하기에 더할 나위 없이 훌륭합니다.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="travel-side-box card">
+        <h3>우리들의 추천 장소</h3>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+         <button id="sort-recent" class="sort-btn active">최신순</button>
+        <button id="sort-likes" class="sort-btn">인기순</button>  </div>
+        <div class="input-group" style="margin-bottom:15px;">
+          <div id="display-nickname" style="font-weight: 800; color: #3f8f5b; margin-bottom: 8px; font-size: 1.1rem;"></div>
+          <textarea id="user-comment" placeholder="우리 동네의 대표장소를 추천해봅시다!" style="width:100%; height:160px; border:1px solid #ddd; border-radius:8px; padding:15px; font-size:1rem; resize:none; line-height:1.5;"></textarea>
+        </div>
+       <div style="margin: 10px 0;">
+         <label for="photo-input" style="display:inline-block; cursor:pointer; background:#f0f7f2; padding:8px 15px; border-radius:10px; font-size:13px; border:1px solid #3f8f5b; color:#3f8f5b; font-weight:bold;">📸 사진 첨부하기</label>
+          <input type="file" id="photo-input" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+         <img id="image-preview" src="#" style="display:none; width:100%; border-radius:14px; margin-top:10px; border:1px solid #eee;">
+          </div>
+        <div class="student-list" id="post-list"></div>
+        <button class="upload-btn" id="student-upload-btn" type="button">추천 장소 남기기</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, doc, deleteDoc, updateDoc, increment, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFRZFFaU4h-LMGcHwYYoni-SyuDY0-2k8",
+    authDomain: "where-is-this-ef31b.firebaseapp.com",
+    projectId: "where-is-this-ef31b",
+    storageBucket: "where-is-this-ef31b.firebasestorage.app",
+    messagingSenderId: "959623211817",
+    appId: "1:959623211817:web:96624f9be6a4297d8ba538"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  const storage = getStorage(app);
+
+  const TOWN_NAME = "정평동"; 
+
+  let currentNick = "";
+  let unsubscribe = null;
+
+  function showToast(message) {
+    const toast = document.createElement("div");
+    toast.className = "toast-msg";
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 100);
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 400);
+    }, 2500);
+  }
+let selectedFile = null; 
+
+window.handleFileSelect = (e) => {
+  selectedFile = e.target.files[0];
+  const preview = document.getElementById("image-preview");
+  if (selectedFile) {
+    const reader = new FileReader();
+    reader.onload = (ex) => {
+      preview.src = ex.target.result;
+      preview.style.display = "block"; 
+    };
+    reader.readAsDataURL(selectedFile);
+  } else {
+    preview.style.display = "none";
+  }
+};
+  window.deletePost = async (postId) => {
+    if (confirm("정말 이 추천글을 삭제할까요?")) {
+      try {
+        await deleteDoc(doc(db, "recommendations", postId));
+        showToast("삭제되었습니다. 🗑️");
+      } catch (e) { console.error(e); }
+    }
+  };
+
+  window.likePost = async (postId) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    const postRef = doc(db, "recommendations", postId);
+    try {
+      const postSnap = await getDoc(postRef);
+      const postData = postSnap.data();
+      const isLiked = postData.likedBy && postData.likedBy.includes(user.uid);
+      if (isLiked) {
+        await updateDoc(postRef, { likes: increment(-1), likedBy: arrayRemove(user.uid) });
+        showToast("추천을 취소했습니다. 💔");
+      } else {
+        await updateDoc(postRef, { likes: increment(1), likedBy: arrayUnion(user.uid) });
+        showToast("추천 완료! 👍");
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  window.deleteComment = async (postId, commentIdx) => {
+    if (!confirm("댓글을 삭제하시겠습니까?")) return;
+    const postRef = doc(db, "recommendations", postId);
+    try {
+      const postSnap = await getDoc(postRef);
+      const comments = postSnap.data().comments;
+      const newComments = comments.filter((_, index) => index !== commentIdx);
+      await updateDoc(postRef, { comments: newComments });
+      showToast("댓글이 삭제되었습니다.");
+    } catch (e) { console.error(e); }
+  };
+
+  window.addComment = async (postId) => {
+    const input = document.getElementById(`comment-input-${postId}`);
+    if (!input.value) return showToast("댓글 내용을 입력해주세요!");
+    try {
+      const postRef = doc(db, "recommendations", postId);
+      await updateDoc(postRef, {
+        comments: arrayUnion({
+          writer: currentNick,
+          uid: auth.currentUser.uid,
+          text: input.value,
+          createdAt: new Date().toISOString()
+        })
+      });
+      input.value = "";
+      showToast("댓글이 등록되었습니다! 💬");
+    } catch (e) { console.error(e); }
+  };
+
+ function loadPosts(sortBy = "createdAt") {
+  if (unsubscribe) unsubscribe();
+  
+  let q;
+  if (sortBy === "likes") {
+    q = query(
+      collection(db, "recommendations"), 
+      where("town", "==", TOWN_NAME), 
+      orderBy("likes", "desc"),
+      orderBy("createdAt", "desc")
+    );
+  } else {
+    q = query(
+      collection(db, "recommendations"), 
+      where("town", "==", TOWN_NAME), 
+      orderBy("createdAt", "desc")
+    );
+  }
+
+  unsubscribe = onSnapshot(q, (snapshot) => {
+    const listDiv = document.getElementById("post-list");
+    if(!listDiv) return;
+    
+    listDiv.innerHTML = ""; 
+    
+    if (snapshot.empty) {
+      listDiv.innerHTML = "<div style='text-align:center; padding:20px; color:#999;'>첫 번째 추천글을 남겨보세요! 🌿</div>";
+      return;
+    }
+    
+    snapshot.forEach((postDoc) => {
+      const data = postDoc.data();
+      const postId = postDoc.id;
+      const isMyPost = data.uid === auth.currentUser?.uid;
+      
+      const commentHtml = (data.comments || []).map((c, index) => {
+        const isMyComment = c.uid === auth.currentUser?.uid;
+        return `
+          <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px;"><b style="color:#3f8f5b;">${c.writer}:</b> ${c.text}</span>
+            ${isMyComment ? `<button onclick="deleteComment('${postId}', ${index})" style="background:none; border:none; color:#e53e3e; cursor:pointer; font-size:10px;">✕</button>` : ""}
+          </div>`;
+      }).join("");
+
+      listDiv.innerHTML += `
+        <div class="place-card" style="margin-bottom:20px; border:1px solid #dcefe1; position:relative;">
+          <div style="color:#3f8f5b; font-size:14px; font-weight:bold;">${data.writer}님의 추천</div>
+          ${data.photo ? `<img src="${data.photo}" style="width:100%; border-radius:10px; margin:10px 0; border:1px solid #eee;">` : ""}
+          <div style="margin:10px 0; font-size:14px; line-height:1.5;">${data.text}</div>
+          <div class="post-actions">
+            <button class="action-btn" onclick="likePost('${postId}')">❤️ 추천 ${data.likes || 0}</button>
+            <button class="action-btn">💬 댓글 ${(data.comments || []).length}</button>
+            ${isMyPost ? `<button class="action-btn delete-btn" onclick="deletePost('${postId}')">지우기</button>` : ""}
+          </div>
+          <div class="comment-section" style="background:#f9fcf9; padding:10px; border-radius:10px; margin-top:10px;">
+            <div id="comments-${postId}">${commentHtml}</div>
+            <div class="comment-input-group" style="display:flex; gap:5px; margin-top:8px;">
+              <input type="text" id="comment-input-${postId}" class="comment-input" placeholder="댓글 달기..." style="flex:1; padding:5px; border-radius:5px; border:1px solid #ddd; font-size:12px;">
+              <button onclick="addComment('${postId}')" style="border:none; background:#3f8f5b; color:white; border-radius:4px; padding:4px 10px; cursor:pointer; font-size:12px;">등록</button>
+            </div>
+          </div>
+        </div>`;
+    });
+  }, (err) => {
+    console.error("쿼리 에러:", err);
+    if (err.code === 'failed-precondition') showToast("색인 설정이 일치하지 않습니다! ⏳");
+  });
+}
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentNick = user.displayName || user.email.split('@')[0];
+      document.getElementById("display-nickname").innerText = `✍️ 작성자: ${currentNick}`;
+      loadPosts("createdAt");
+    } else {
+      location.href = "start.html";
+    }
+  });
+
+  document.getElementById("sort-recent").onclick = () => {
+    loadPosts("createdAt");
+    document.getElementById("sort-recent").style.cssText = "background:#3f8f5b; color:white;";
+    document.getElementById("sort-likes").style.cssText = "background:white; color:#3f8f5b; border:1px solid #3f8f5b;";
+  };
+  document.getElementById("sort-likes").onclick = () => {
+    loadPosts("likes");
+    document.getElementById("sort-likes").style.cssText = "background:#3f8f5b; color:white;";
+    document.getElementById("sort-recent").style.cssText = "background:white; color:#3f8f5b; border:1px solid #3f8f5b;";
+  };
+document.getElementById("student-upload-btn").addEventListener("click", async () => {
+  const comment = document.getElementById("user-comment").value;
+  if (!comment) return showToast("추천 내용을 입력해주세요! ✍️");
+  
+  const btn = document.getElementById("student-upload-btn");
+  btn.disabled = true; 
+  btn.innerText = "업로드 중...";
+
+  try {
+    let photoURL = "";
+
+    if (selectedFile) {
+      const storageRef = ref(storage, `town_photos/${Date.now()}_${selectedFile.name}`);
+      const snapshot = await uploadBytes(storageRef, selectedFile);
+      photoURL = await getDownloadURL(snapshot.ref); 
+    }
+
+    await addDoc(collection(db, "recommendations"), {
+      town: TOWN_NAME,
+      writer: currentNick,
+      uid: auth.currentUser.uid,
+      text: comment,
+      photo: photoURL, 
+      likes: 0,
+      likedBy: [],
+      comments: [],
+      createdAt: new Date()
+    });
+
+    showToast("추천이 등록되었습니다! 🎉");
+    
+    document.getElementById("user-comment").value = "";
+    document.getElementById("photo-input").value = "";
+    document.getElementById("image-preview").style.display = "none";
+    selectedFile = null;
+    btn.disabled = false;
+    btn.innerText = "추천 등록하기";
+
+    setTimeout(() => loadPosts("createdAt"), 300);
+
+  } catch (e) {
+    console.error(e);
+    showToast("등록 실패. 다시 시도해주세요.");
+    btn.disabled = false;
+    btn.innerText = "추천 등록하기";
+  }
+});
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(btn.dataset.tab).classList.add("active");
+    });
+  });
+</script>
+<script src="/sound.js"></script>
+</body>
+</html>

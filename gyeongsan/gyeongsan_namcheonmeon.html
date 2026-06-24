@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title> 남천면 상세 탐방</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Pretendard", "Noto Sans KR", sans-serif;
+      background: none;
+      color: #1f2937;
+    }
+
+    body {
+      padding: 0;
+    }
+
+    .app {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .bg-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.12);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .page-wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .page-wrap::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .page-wrap::-webkit-scrollbar-thumb {
+      background: rgba(63, 143, 91, 0.35);
+      border-radius: 999px;
+    }
+
+    .page-frame {
+      width: min(1200px, 100%);
+      margin: 0 auto;
+      background: linear-gradient(180deg, #f7fff8 0%, #eef8f0 100%);
+      border-radius: 28px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 18px 22px;
+      background: rgba(255,255,255,0.38);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .back-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      background: #ffffff;
+      color: #3f8f5b;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+      border: 1px solid #9fd3ad;
+    }
+
+    .back-btn:hover,
+    .tab-btn:hover,
+    .upload-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .hero {
+      padding: 32px 28px 24px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.42), transparent 28%),
+        linear-gradient(135deg, #dff5e6 0%, #edf9f0 100%);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.05;
+      color: #2f4f38;
+      letter-spacing: -1px;
+    }
+
+    .title-wrap p {
+      margin: 10px 0 0;
+      color: #4d6353;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .content {
+      padding: 24px;
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      background: #e7f4eb;
+      color: #3f8f5b;
+      transition: 0.18s ease;
+      border: 1px solid #c9e5d2;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(180deg, #6db785 0%, #3f8f5b 100%);
+      color: white;
+      box-shadow: 0 8px 18px rgba(63, 143, 91, 0.22);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.88);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.07);
+      border: 1px solid rgba(63,143,91,0.08);
+    }
+
+    .card h2,
+    .card h3 {
+      margin: 0 0 12px;
+      color: #2f4f38;
+      letter-spacing: -0.4px;
+    }
+
+    .card h2 {
+      font-size: 24px;
+    }
+
+    .card h3 {
+      font-size: 18px;
+    }
+
+    .card p,
+    .card li {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.8;
+      color: #4d6353;
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .image-frame {
+      width: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #e2efe5;
+      border: 2px solid #d6eadc;
+    }
+
+    .main-image-frame {
+      min-height: 260px;
+    }
+
+    .map-image-frame {
+      min-height: 180px;
+      margin-top: 16px;
+    }
+
+    .section-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .source-note {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #6b7280;
+      text-align: right;
+    }
+
+    .history-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .info-item {
+      background: #f6fcf7;
+      border: 1px solid #dcefe1;
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .info-item .q {
+      font-size: 14px;
+      font-weight: 800;
+      color: #3f8f5b;
+      margin-bottom: 8px;
+    }
+
+    .answer-status,
+    .travel-answer-box {
+      margin-top: 10px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #edf9f0;
+      color: #315c40;
+      line-height: 1.7;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .travel-layout {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .travel-main-box,
+    .travel-side-box {
+      background: rgba(255,255,255,0.88);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.07);
+      border: 1px solid rgba(63,143,91,0.08);
+    }
+
+    .travel-main-box h2,
+    .travel-side-box h3 {
+      margin: 0 0 12px;
+      color: #2f4f38;
+    }
+
+    .travel-main-box p,
+    .travel-side-box p {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.75;
+      color: #4d6353;
+    }
+
+    .featured-list,
+    .student-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .place-card {
+      background: #f6fcf7;
+      border: 1px solid #dcefe1;
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .place-thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 14px;
+      object-fit: cover;
+      display: block;
+      margin-bottom: 12px;
+      background: #dde9e0;
+    }
+
+    .place-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #2f4f38;
+      margin-bottom: 8px;
+    }
+
+    .place-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #4d6353;
+    }
+
+    .upload-btn {
+      border: none;
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 14px;
+      background: #ffffff;
+      color: #3f8f5b;
+      border: 1px solid #9fd3ad;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    }
+
+    .firebase-box {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #f6fcf7;
+      border: 1px dashed #b9d5c1;
+      color: #4d6353;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 980px) {
+      .page-wrap {
+        padding: 12px;
+      }
+
+      .grid-2,
+      .travel-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .content {
+        padding: 16px;
+      }
+
+      .hero {
+        padding: 24px 18px 18px;
+      }
+
+      .top-bar {
+        padding: 14px 16px;
+      }
+
+      .main-image-frame {
+        min-height: 220px;
+      }
+
+      .map-image-frame {
+        min-height: 160px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .tab-btn {
+        width: 100%;
+      }
+
+      .title-wrap h1 {
+        font-size: 34px;
+      }
+    }
+.toast-msg {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(63, 143, 91, 0.95);
+  color: white;
+  padding: 12px 25px;
+  border-radius: 50px;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.4s ease;
+  pointer-events: none;
+}
+.toast-msg.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.post-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.delete-btn { color: #e53e3e; margin-left: auto; }
+
+.comment-section {
+  margin-top: 10px;
+  background: #f9fcf9;
+  padding: 10px;
+  border-radius: 10px;
+}
+.comment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 4px;
+}
+.comment-input-group {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+.comment-input {
+  flex: 1;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  font-size: 12px;
+}
+.sort-btn {
+  cursor: pointer;
+  border: 1px solid #3f8f5b;
+  background: white;
+  color: #3f8f5b;
+  padding: 6px 12px;
+  border-radius: 6px; 
+  font-size: 12px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.sort-btn.active {
+  background: #3f8f5b;
+  color: white;
+}
+  </style>
+</head>
+<body>
+ <div class="app">
+    <video class="bg-video" autoplay muted loop playsinline>
+      <source src="/video/background.mp4" type="video/mp4" />
+    </video>
+    <div class="bg-overlay"></div>
+<div class="page-wrap">
+      <div class="page-frame">
+        <div class="top-bar">
+          <button class="back-btn" type="button" onclick="setTimeout(() => history.back(), 150)">← 경산 지도로 돌아가기</button>
+        </div>
+<section class="hero">
+  <div class="hero-top">
+    <div class="title-wrap">
+      <h1>남천면</h1>
+      <p>산전동 분청사기의 은은한 빛깔을 품고, 경흥사 삼존불의 자비로운 정기 아래 상생하는 청정 전원 도시</p>
+    </div>
+  </div>
+</section>
+
+<main class="content">
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="tab1">우리 동네</button>
+    <button class="tab-btn" data-tab="tab2">우리 동네 역사</button>
+    <button class="tab-btn" data-tab="tab4">대표 추천 장소</button>
+  </div>
+
+  <section class="tab-panel active" id="tab1">
+    <div class="grid-2">
+      <div class="card">
+        <h2>우리 동네는 어떤 곳일까요?</h2>
+        <div class="image-frame main-image-frame">
+          <img src="/images/gyeongsan/namcheon.jpg" alt="남천면 전체 지도" class="section-image" />
+        </div>
+        <div class="image-frame map-image-frame">
+          <img src="/images/gyeongsan/남천면경산산전동분청사기요지.jpg" alt="경산 산전동 분청사기요지 주변 위치 지도" class="section-image" />
+        </div>
+        <p class="source-note">출처: 경산시청 / NAVER 지도</p>
+      </div>
+
+      <div class="stack">
+        <div class="card">
+          <h3>우리 동네 대표 장소: 장인들의 뜨거운 불길과 흙의 미학이 살아 숨 쉬는 곳, 경산 산전동 분청사기요지 옛 가마터</h3>
+          <p>
+            **남천면** 산전리 '모골'마을 앞, 상서로운 능선 말단부 경사면에 아늑하게 자리 잡은 **경산 산전동 분청사기요지**는 조선 전기 고을 주민들과 도공들이 합심하여 예술성 높은 도자기를 구워내던 우리 동네 최고의 역사적 전통 문화 거점 공간입니다. 완만한 산자락을 따라 남-북 방향으로 정연하게 배치된 가마터 주변에는 다량의 자기 조각과 가마 벽체 조각, 그리고 도자기를 구울 때 받치던 도지미 유물들이 조밀하게 산포되어 있지요. 특히 이곳은 '경산장흥고(慶山長興庫)', '경산맥석(慶山麥石)' 등 관청의 소속과 생산지를 정밀하게 새겨 넣은 가치 높은 명품 분청사기 조각들이 대량 출토되어 고대·중세사적 영남 도자 유통망의 노른자위 요충지였음을 고증해 줍니다. 모골 식당 들머리 서쪽 경사면에 안내판이 설치된 단정한 흙길 산책로를 따라 걸으며, 조상들의 성실했던 장인 정신과 소박한 시골 고향의 정취를 생생하게 느껴보기 최고의 명소 공간입니다.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="tab2">
+    <div class="history-stack">
+      <div class="card">
+        <h2>남천면 이름 속에 담긴 이야기</h2>
+        <p>
+          우리 동네 **남천(南川)**면은 지명 속에 삼성산과 선암산 푸른 준령 아래로 사시사철 맑고 풍부한 샘물이 흘러내리는 청정 하천(川)의 뜻을 소중히 품고 있습니다. 향토 문헌 고증에 따르면 본래 삼한 시대 압독국의 기름진 배후 벌판으로서 일찍부터 주거 공동체가 발달해 왔으며, 조선 시대에는 경산현에 소속되어 고을 관청을 기준으로 남쪽을 흐르는 상생의 젖줄이라는 의미에서 **'남천면(南川面)'**이라 정식 지명이 명확하게 정립되었습니다. 인조 22년(1644년) 복장기 연혁을 통해 기품 있는 화려한 보관 양식이 증명된 경흥사의 삼존불좌상이 고을의 안녕을 수호해 왔고, 산전리 모골마을의 가마터에서 구워낸 분청사기가 조선 왕실의 장흥고 관청에 공납 되면서 문향과 예술의 고장으로 널리 칭송받아 온 천혜의 옥토입니다.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>우리 동네 역사</h2>
+        <div class="info-list">
+          <div class="info-item">
+            <div class="q">삼한 및 삼국 시대 (압독국 배후의 옥토와 남천 물길의 태동)</div>
+            <p>고대 삼한 시대 부족 국가인 압독국의 상서로운 영토로서 삼성산($554.5\text{m}$) 지맥과 청정 남천천 변의 비옥한 토양을 기반으로 소박한 전원 영농 공동체가 가설되었습니다. 사방의 산자락이 수려해 오가는 길손들의 든든한 쉼터가 되어주며 역사의 첫 장을 열었습니다.</p>
+          </div>
+          <div class="info-item">
+            <div class="q">조선 시대 (경산현 남천면 정립과 분청사기·경흥사의 번창)</div>
+            <p>조선 후기 행정 구역 개편 고증에 따라 경산현 관할의 남천면으로 명확히 정립되었습니다. 산전리 모골마을 경사면에 가마터가 번창하여 '경산장흥고' 문양이 선명한 명품 조형 분청사기를 생산했고, 인조 22년(1644년)에는 경흥사 대웅전에 화려한 보관을 쓴 삼존불좌상이 봉안되면서 도학과 불교 예술의 주권 정신을 대대로 꽃피웠습니다.</p>
+          </div>
+          <div class="info-item">
+            <div class="q">근대 초기 (1914년 행정 구역 통폐합과 경산군 남천면 연혁)</div>
+            <p>1914년 총독부령 행정구역 대개편 고증에 따라 기존 경산군 관할의 산전리, 대명리, 삼성리, 평기리 등 유서 깊은 토착 자연 부락들을 정밀하게 대통합하여 '경산군 남천면'으로 개편하고, 면사무소를 중심으로 근대 주거 상권의 세련된 뼈대를 정착시켰습니다.</p>
+          </div>
+          <div class="info-item">
+            <div class="q">1970~80년대 (중앙고속도로망 연결과 청정 과수 부촌 도약)</div>
+            <p>남천면을 남북으로 시원하게 관통하는 국도 25호선 도로망과 중앙고속도로(부산-대구선) 인프라가 정밀하게 정착되면서 영남 교통의 핵심 길목으로 도약했습니다. 사방 구릉지의 풍부한 일조량을 활용하여 전국 최고 품질의 명품 경산 자두와 친환경 농산물을 대규모로 출하하며 주민 자립 소득의 전성기를 다졌습니다.</p>
+          </div>
+          <div class="info-item">
+            <div class="q">오늘날 (경산시 남천면 완성 및 명품 웰니스 전원 도시 완성)</div>
+            <p>1995년 시·군 대통합 조례 고증에 따라 경산시 남천면으로 개편되었습니다. 인조 시기 개금 복장기가 확인된 경흥사 목조아미타삼존불좌상 가옥을 청결하게 보존하는 한편, 산전동 분청사기요지 안내길을 체계적으로 정비했습니다. 마을의 오랜 수호림인 평기리 당산나무 숲길과 남천천 수변 인도 데크길을 정밀 가꾸어, 천년의 전통 유래 숨결과 시원한 전원 웰니스 조경이 아름답게 공존하는 경산 최고의 명당으로 큰 사랑을 받고 있습니다.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>동네 주요 장소 이름 유래</h2>
+        <div class="info-list">
+          <div class="info-item">
+            <div class="q">경흥사(慶興寺) 목조삼존불의 연혁</div>
+            <p>대웅전 안에 자비롭게 봉안된 조선 인조 22년(1644년) 조성 불상으로, 본래는 목조석가여래삼존좌상으로 구전되었으나 복장기 문헌 조사 고증을 통해 정수리에 작은 육계를 갖추고 극락정토를 주관하는 영험한 '목조아미타삼존불좌상'임이 정밀하게 밝혀진 우리 동네 보물입니다.</p>
+          </div>
+          <div class="info-item">
+            <div class="q">산전리(山田里) 모골마을</div>
+            <p>분청사기요지가 자리한 서정적인 자연 부락으로, 옛날 사방이 웅장한 산(山)으로 둘러싸인 밭(田) 마당 기슭에서 점토를 채굴할 당시, 가마터에 땔감으로 쓰일 참나무 등 모(募·모을 모)든 나무 물산이 골짜기 가득 풍부하게 모여든다 하여 붙여진 이름입니다.</p>
+          </div>
+          <div class="info-item">
+            <div class="q">평기(坪基)리 당산숲</div>
+            <p>동네 남쪽에 위치한 유서 깊은 고을로, 풍수지리상 산자락 아래 넓고 평평한 벌판 터전(坪基)이 넓게 펼쳐져 있어 오곡풍성한 대농을 일구었고, 고을의 안녕을 위해 수령 수백 년의 노거수 수목들을 당산나무 보호림으로 정성껏 가꾸어왔다 하여 전해오는 지명입니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="tab4">
+    <div class="travel-layout">
+      <div class="travel-main-box">
+        <h2>대표 추천 장소</h2>
+        <div class="featured-list">
+       
+
+          <div class="place-card">
+            <img src="/images/gyeongsan/남천면경산경흥사목조석가여래삼존좌상.jpg" alt="남천면 경산 경흥사 목조석가여래삼존좌상" class="place-thumb" />
+            <div class="place-title">경흥사 목조아미타삼존불좌상 대웅전</div>
+            <div class="place-desc">조선 인조 22년(1644년) 복장기 기록의 기품 있는 연혁을 간직하고 대웅전 내에 자비롭게 봉안된 명품 목조 삼존불입니다. 두터운 옷 주름과 화려한 보관을 쓴 좌우 협시보살좌상의 수려한 비례가 한 폭의 동양화 같은 경외감을 선사하며, 고즈넉한 사찰 돌담길 조경을 따라 은은한 솔향기를 맡으며 마음을 깨끗이 씻어내기에 참 좋은 공간입니다.</div>
+          </div>
+
+          <div class="place-card">
+            <div class="place-title">평기리 전통당산 수목보호림</div>
+            <div class="place-desc">조선 시대 경산현 시절부터 고을의 수해를 막고 안녕을 보위하기 위해 주민들이 일치단결하여 정성껏 가꿔온 천연 평지 보존 숲입니다. 수령 수백 년에 이르는 웅장한 느티나무와 노거수 조경이 경이로운 장관을 이루고 있으며, 바쁜 도심의 피로를 벗어나 숲속 상쾌한 산새 소리를 들으며 아침 조깅을 즐기기에 안성맞춤입니다.</div>
+          </div>
+
+          <div class="place-card">
+            <div class="place-title">남천천 청정 하안생태수변길</div>
+            <div class="place-desc">남천면의 심장부를 남북으로 유유히 흐르며 비옥한 전원 평야 지대에 풍부한 청정 수자원을 공급하는 고을의 거대한 젖줄 강변길입니다. 맑은 여울 물소리와 둑길을 따라 정밀하게 가꾸어진 생태 완충 갈대숲 산책로가 일품이며, 안전하게 정비된 인도 블록을 따라 시원한 바람을 맞으며 가만히 산책하기에 더할 나위 없이 훌륭한 길목입니다.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="travel-side-box card">
+        <h3>우리들의 추천 장소</h3>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+         <button id="sort-recent" class="sort-btn active">최신순</button>
+        <button id="sort-likes" class="sort-btn">인기순</button>  </div>
+        <div class="input-group" style="margin-bottom:15px;">
+          <div id="display-nickname" style="font-weight: 800; color: #3f8f5b; margin-bottom: 8px; font-size: 1.1rem;"></div>
+          <textarea id="user-comment" placeholder="우리 동네의 대표장소를 추천해봅시다!" style="width:100%; height:160px; border:1px solid #ddd; border-radius:8px; padding:15px; font-size:1rem; resize:none; line-height:1.5;"></textarea>
+        </div>
+       <div style="margin: 10px 0;">
+         <label for="photo-input" style="display:inline-block; cursor:pointer; background:#f0f7f2; padding:8px 15px; border-radius:10px; font-size:13px; border:1px solid #3f8f5b; color:#3f8f5b; font-weight:bold;">📸 사진 첨부하기</label>
+          <input type="file" id="photo-input" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+         <img id="image-preview" src="#" style="display:none; width:100%; border-radius:14px; margin-top:10px; border:1px solid #eee;">
+          </div>
+        <div class="student-list" id="post-list"></div>
+        <button class="upload-btn" id="student-upload-btn" type="button">추천 장소 남기기</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, doc, deleteDoc, updateDoc, increment, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFRZFFaU4h-LMGcHwYYoni-SyuDY0-2k8",
+    authDomain: "where-is-this-ef31b.firebaseapp.com",
+    projectId: "where-is-this-ef31b",
+    storageBucket: "where-is-this-ef31b.firebasestorage.app",
+    messagingSenderId: "959623211817",
+    appId: "1:959623211817:web:96624f9be6a4297d8ba538"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  const storage = getStorage(app);
+
+  const TOWN_NAME = "남천면"; 
+
+  let currentNick = "";
+  let unsubscribe = null;
+
+  function showToast(message) {
+    const toast = document.createElement("div");
+    toast.className = "toast-msg";
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 100);
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 400);
+    }, 2500);
+  }
+let selectedFile = null; 
+
+window.handleFileSelect = (e) => {
+  selectedFile = e.target.files[0];
+  const preview = document.getElementById("image-preview");
+  if (selectedFile) {
+    const reader = new FileReader();
+    reader.onload = (ex) => {
+      preview.src = ex.target.result;
+      preview.style.display = "block"; 
+    };
+    reader.readAsDataURL(selectedFile);
+  } else {
+    preview.style.display = "none";
+  }
+};
+  window.deletePost = async (postId) => {
+    if (confirm("정말 이 추천글을 삭제할까요?")) {
+      try {
+        await deleteDoc(doc(db, "recommendations", postId));
+        showToast("삭제되었습니다. 🗑️");
+      } catch (e) { console.error(e); }
+    }
+  };
+
+  window.likePost = async (postId) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    const postRef = doc(db, "recommendations", postId);
+    try {
+      const postSnap = await getDoc(postRef);
+      const postData = postSnap.data();
+      const isLiked = postData.likedBy && postData.likedBy.includes(user.uid);
+      if (isLiked) {
+        await updateDoc(postRef, { likes: increment(-1), likedBy: arrayRemove(user.uid) });
+        showToast("추천을 취소했습니다. 💔");
+      } else {
+        await updateDoc(postRef, { likes: increment(1), likedBy: arrayUnion(user.uid) });
+        showToast("추천 완료! 👍");
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  window.deleteComment = async (postId, commentIdx) => {
+    if (!confirm("댓글을 삭제하시겠습니까?")) return;
+    const postRef = doc(db, "recommendations", postId);
+    try {
+      const postSnap = await getDoc(postRef);
+      const comments = postSnap.data().comments;
+      const newComments = comments.filter((_, index) => index !== commentIdx);
+      await updateDoc(postRef, { comments: newComments });
+      showToast("댓글이 삭제되었습니다.");
+    } catch (e) { console.error(e); }
+  };
+
+  window.addComment = async (postId) => {
+    const input = document.getElementById(`comment-input-${postId}`);
+    if (!input.value) return showToast("댓글 내용을 입력해주세요!");
+    try {
+      const postRef = doc(db, "recommendations", postId);
+      await updateDoc(postRef, {
+        comments: arrayUnion({
+          writer: currentNick,
+          uid: auth.currentUser.uid,
+          text: input.value,
+          createdAt: new Date().toISOString()
+        })
+      });
+      input.value = "";
+      showToast("댓글이 등록되었습니다! 💬");
+    } catch (e) { console.error(e); }
+  };
+
+ function loadPosts(sortBy = "createdAt") {
+  if (unsubscribe) unsubscribe();
+  
+  let q;
+  if (sortBy === "likes") {
+    q = query(
+      collection(db, "recommendations"), 
+      where("town", "==", TOWN_NAME), 
+      orderBy("likes", "desc"),
+      orderBy("createdAt", "desc")
+    );
+  } else {
+    q = query(
+      collection(db, "recommendations"), 
+      where("town", "==", TOWN_NAME), 
+      orderBy("createdAt", "desc")
+    );
+  }
+
+  unsubscribe = onSnapshot(q, (snapshot) => {
+    const listDiv = document.getElementById("post-list");
+    if(!listDiv) return;
+    
+    listDiv.innerHTML = ""; 
+    
+    if (snapshot.empty) {
+      listDiv.innerHTML = "<div style='text-align:center; padding:20px; color:#999;'>첫 번째 추천글을 남겨보세요! 🌿</div>";
+      return;
+    }
+    
+    snapshot.forEach((postDoc) => {
+      const data = postDoc.data();
+      const postId = postDoc.id;
+      const isMyPost = data.uid === auth.currentUser?.uid;
+      
+      const commentHtml = (data.comments || []).map((c, index) => {
+        const isMyComment = c.uid === auth.currentUser?.uid;
+        return `
+          <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px;"><b style="color:#3f8f5b;">${c.writer}:</b> ${c.text}</span>
+            ${isMyComment ? `<button onclick="deleteComment('${postId}', ${index})" style="background:none; border:none; color:#e53e3e; cursor:pointer; font-size:10px;">✕</button>` : ""}
+          </div>`;
+      }).join("");
+
+      listDiv.innerHTML += `
+        <div class="place-card" style="margin-bottom:20px; border:1px solid #dcefe1; position:relative;">
+          <div style="color:#3f8f5b; font-size:14px; font-weight:bold;">${data.writer}님의 추천</div>
+          ${data.photo ? `<img src="${data.photo}" style="width:100%; border-radius:10px; margin:10px 0; border:1px solid #eee;">` : ""}
+          <div style="margin:10px 0; font-size:14px; line-height:1.5;">${data.text}</div>
+          <div class="post-actions">
+            <button class="action-btn" onclick="likePost('${postId}')">❤️ 추천 ${data.likes || 0}</button>
+            <button class="action-btn">💬 댓글 ${(data.comments || []).length}</button>
+            ${isMyPost ? `<button class="action-btn delete-btn" onclick="deletePost('${postId}')">지우기</button>` : ""}
+          </div>
+          <div class="comment-section" style="background:#f9fcf9; padding:10px; border-radius:10px; margin-top:10px;">
+            <div id="comments-${postId}">${commentHtml}</div>
+            <div class="comment-input-group" style="display:flex; gap:5px; margin-top:8px;">
+              <input type="text" id="comment-input-${postId}" class="comment-input" placeholder="댓글 달기..." style="flex:1; padding:5px; border-radius:5px; border:1px solid #ddd; font-size:12px;">
+              <button onclick="addComment('${postId}')" style="border:none; background:#3f8f5b; color:white; border-radius:4px; padding:4px 10px; cursor:pointer; font-size:12px;">등록</button>
+            </div>
+          </div>
+        </div>`;
+    });
+  }, (err) => {
+    console.error("쿼리 에러:", err);
+    if (err.code === 'failed-precondition') showToast("색인 설정이 일치하지 않습니다! ⏳");
+  });
+}
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentNick = user.displayName || user.email.split('@')[0];
+      document.getElementById("display-nickname").innerText = `✍️ 작성자: ${currentNick}`;
+      loadPosts("createdAt");
+    } else {
+      location.href = "start.html";
+    }
+  });
+
+  document.getElementById("sort-recent").onclick = () => {
+    loadPosts("createdAt");
+    document.getElementById("sort-recent").style.cssText = "background:#3f8f5b; color:white;";
+    document.getElementById("sort-likes").style.cssText = "background:white; color:#3f8f5b; border:1px solid #3f8f5b;";
+  };
+  document.getElementById("sort-likes").onclick = () => {
+    loadPosts("likes");
+    document.getElementById("sort-likes").style.cssText = "background:#3f8f5b; color:white;";
+    document.getElementById("sort-recent").style.cssText = "background:white; color:#3f8f5b; border:1px solid #3f8f5b;";
+  };
+document.getElementById("student-upload-btn").addEventListener("click", async () => {
+  const comment = document.getElementById("user-comment").value;
+  if (!comment) return showToast("추천 내용을 입력해주세요! ✍️");
+  
+  const btn = document.getElementById("student-upload-btn");
+  btn.disabled = true; 
+  btn.innerText = "업로드 중...";
+
+  try {
+    let photoURL = "";
+
+    if (selectedFile) {
+      const storageRef = ref(storage, `town_photos/${Date.now()}_${selectedFile.name}`);
+      const snapshot = await uploadBytes(storageRef, selectedFile);
+      photoURL = await getDownloadURL(snapshot.ref); 
+    }
+
+    await addDoc(collection(db, "recommendations"), {
+      town: TOWN_NAME,
+      writer: currentNick,
+      uid: auth.currentUser.uid,
+      text: comment,
+      photo: photoURL, 
+      likes: 0,
+      likedBy: [],
+      comments: [],
+      createdAt: new Date()
+    });
+
+    showToast("추천이 등록되었습니다! 🎉");
+    
+    document.getElementById("user-comment").value = "";
+    document.getElementById("photo-input").value = "";
+    document.getElementById("image-preview").style.display = "none";
+    selectedFile = null;
+    btn.disabled = false;
+    btn.innerText = "추천 등록하기";
+
+    setTimeout(() => loadPosts("createdAt"), 300);
+
+  } catch (e) {
+    console.error(e);
+    showToast("등록 실패. 다시 시도해주세요.");
+    btn.disabled = false;
+    btn.innerText = "추천 등록하기";
+  }
+});
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(btn.dataset.tab).classList.add("active");
+    });
+  });
+</script>
+<script src="/sound.js"></script>
+</body>
+</html>
