@@ -4,7 +4,7 @@ if (!window.top.bgmAudio) {
   window.top.bgmAudio.volume = 0.5;
 }
 
-const clickSound = new Audio('./sound/click.wav');
+const clickSound = new Audio('sound/click.wav');
 
 
 window.addEventListener('pageshow', () => {
