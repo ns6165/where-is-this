@@ -1,5 +1,5 @@
 if (!window.top.bgmAudio) {
-  window.top.bgmAudio = new Audio('./sound/music/bgm1.mp3');
+  window.top.bgmAudio = new Audio('sound/music/bgm1.mp3');
   window.top.bgmAudio.loop = true;
   window.top.bgmAudio.volume = 0.5;
 }
