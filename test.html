@@ -239,6 +239,8 @@ button {
   </div>
 <script type="module">
   
+document.addEventListener('DOMContentLoaded', () => {
+  
 document.getElementById("triptestBtn").onclick = () => {
   setTimeout(() => { location.href = "trip_test.html"; }, 200);
 };
@@ -1242,9 +1244,6 @@ document.getElementById("mapgameBtn").onclick = () => {
   }
 });
 
-document.getElementById("openModalBtn").addEventListener("click", () => {
-    document.getElementById("infoModal").style.display = "flex";
-  });
 
   document.getElementById("menuCloseBtn").addEventListener("click", () => {
     document.getElementById("infoModal").style.display = "none";
@@ -1256,7 +1255,12 @@ document.getElementById("openModalBtn").addEventListener("click", () => {
       localStorage.setItem('hasSeenModal', 'true');
     }
   });
-  
+  const openModalBtn = document.getElementById("openModalBtn");
+    if (openModalBtn) { 
+      openModalBtn.addEventListener("click", () => {
+        document.getElementById("infoModal").style.display = "flex";
+      });
+    }
 </script>
 <script src="sound.js"></script>
 </body>
