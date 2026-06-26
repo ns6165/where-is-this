@@ -1143,6 +1143,16 @@ document.getElementById("mapgameBtn").onclick = () => {
       randomBtn.addEventListener('click', startRandomRoulette);
     }
   });
+  window.addEventListener('pageshow', (event) => {
+  const modal = document.getElementById('roulette-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  const display = document.getElementById('roulette-display');
+  if (display) {
+    display.innerText = "준비중";
+  }
+});
 </script>
 <script src="sound.js"></script>
 </body>
