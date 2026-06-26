@@ -245,8 +245,6 @@ button {
   </div>
 <script type="module">
   
-document.addEventListener('DOMContentLoaded', () => {
-  
 document.getElementById("triptestBtn").onclick = () => {
   setTimeout(() => { location.href = "trip_test.html"; }, 200);
 };
@@ -1239,17 +1237,10 @@ document.getElementById("mapgameBtn").onclick = () => {
       randomBtn.addEventListener('click', startRandomRoulette);
     }
   });
-  window.addEventListener('pageshow', (event) => {
-  const modal = document.getElementById('roulette-modal');
-  if (modal) {
-    modal.style.display = 'none';
-  }
-  const display = document.getElementById('roulette-display');
-  if (display) {
-    display.innerText = "준비중";
-  }
-});
 
+document.getElementById("openModalBtn").addEventListener("click", () => {
+    document.getElementById("infoModal").style.display = "flex";
+  });
 
   document.getElementById("menuCloseBtn").addEventListener("click", () => {
     document.getElementById("infoModal").style.display = "none";
@@ -1261,12 +1252,7 @@ document.getElementById("mapgameBtn").onclick = () => {
       localStorage.setItem('hasSeenModal', 'true');
     }
   });
-  const openModalBtn = document.getElementById("openModalBtn");
-    if (openModalBtn) { 
-      openModalBtn.addEventListener("click", () => {
-        document.getElementById("infoModal").style.display = "flex";
-      });
-    }
+
 </script>
 <script src="sound.js"></script>
 </body>
