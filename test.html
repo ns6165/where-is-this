@@ -201,7 +201,8 @@ button {
      <b>1. 여행지 취향 테스트:</b> 나의 여행 스타일을 분석하고 딱 맞는 여행지를 추천받아 보세요.<br>
      <b>2. 음식 취향 여행지 테스트:</b> 좋아하는 음식 취향을 입력하여 나만의 미식 여행 경로를 확인하세요.<br>
      <b>3. 경북 지도 게임:</b> 재미있는 지도를 통해 우리 고장의 위치와 특징을 익혀보세요.<br>
-     <b>4. 랜덤 지역 탐방:</b> 룰렛을 돌려 새로운 지역으로 뜻밖의 탐험을 떠나보세요!<br>
+     <b>4. 지역 순서 게임:</b> 지도 속 경북을 누비며 우리 고장의 숨은 매력을 찾아보세요.<br>
+     <b>5. 랜덤 지역 탐방:</b> 룰렛을 돌려 새로운 지역으로 뜻밖의 탐험을 떠나보세요!<br>
     </div>
     
     <div class="menu-wrap" style="display:flex; flex-direction:column; gap:10px;">
@@ -236,6 +237,7 @@ button {
     <button class="menu-btn" id="triptestBtn">여행지 취향 테스트</button>
     <button class="menu-btn" id="foodtestBtn">음식 취향 여행지 테스트</button>
     <button class="menu-btn" id="mapgameBtn">경북 지도 게임</button>
+    <button class="menu-btn" id="memoryBtn">지역 순서 게임</button>
     <button class="menu-btn" id="randomBtn">랜덤 지역 탐방</button>
   </div>
 </div>
@@ -253,6 +255,9 @@ document.getElementById("foodtestBtn").onclick = () => {
 
 document.getElementById("mapgameBtn").onclick = () => {
   setTimeout(() => { location.href = "map_game.html"; }, 200);
+  document.getElementById("memoryBtn").onclick = () => {
+  setTimeout(() => { location.href = "map_game2.html"; }, 200);
+};
 };
 
   const exploreFiles = [
