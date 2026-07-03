@@ -557,7 +557,6 @@ button {
         const commentHtml = (data.comments || []).map((c, index) => {
         const score = c.toxicityScore || 0; 
 
-  // 2. 점수가 높으면 숨김 처리를 합니다.
   if (score >= 0.75) {
     return `<div style="font-size:13px; color:#888;">(부적절한 댓글로 숨겨졌습니다)</div>`;
   }
