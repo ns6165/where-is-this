@@ -553,7 +553,9 @@ button {
         }
 
         const commentHtml = (data.comments || []).map((c, index) => {
-        const score = c.toxicityScore || 0; 
+       const isToxic = c.toxicityScore && c.toxicityScore >= 0.75;
+  const displayText = isToxic ? "(부적절한 댓글로 숨겨졌습니다)" : c.text;
+  const isMyComment = c.uid === auth.currentUser?.uid;
 
  
           const isMyComment = c.uid === auth.currentUser?.uid;
