@@ -544,7 +544,6 @@ button {
 
       snapshot.forEach((postDoc) => {
         const data = postDoc.data();
-       
         const postId = postDoc.id;
         const isMyPost = data.uid === auth.currentUser?.uid;
 
@@ -553,18 +552,13 @@ button {
         }
 
         const commentHtml = (data.comments || []).map((c, index) => {
- 
-  const isMyComment = c.uid === auth.currentUser?.uid; 
-
-  return `
-    <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:13px;">
-        <b style="color:#3f8f5b;">${c.writer}:</b> 
-        <span style="${isToxic ? 'color:#888; font-style:italic;' : ''}">${displayText}</span>
-      </span>
-      ${isMyComment ? `<button onclick="deleteComment('${postId}', ${index})" style="background:none; border:none; color:#e53e3e; cursor:pointer; font-size:10px;">✕</button>` : ""}
-    </div>`;
-}).join("");
+          const isMyComment = c.uid === auth.currentUser?.uid;
+          return `
+            <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px;"><b style="color:#3f8f5b;">${c.writer}:</b> ${c.text}</span>
+              ${isMyComment ? `<button onclick="deleteComment('${postId}', ${index})" style="background:none; border:none; color:#e53e3e; cursor:pointer; font-size:10px;">✕</button>` : ""}
+            </div>`;
+        }).join("");
 
         const privacyBadgeHtml = data.isPublic === false ? `<span class="private-badge">🔒 나만 보기</span>` : "";
 
@@ -580,8 +574,7 @@ button {
             <div style="color:#3f8f5b; font-size:14px; font-weight:bold; margin-top:5px;">${data.writer} 친구의 탐험기</div>
             ${data.photo ? `<img src="${data.photo}" style="width:100%; max-height:250px; object-fit:cover; border-radius:10px; margin:10px 0; border:1px solid #eee;">` : ""}
             <div style="margin:10px 0; font-size:14px; line-height:1.5; white-space:pre-wrap;">${data.text}</div>
-         
-
+            
             <div class="post-actions">
               <button class="action-btn-mini" onclick="likePost('${postId}')">❤️ 추천 ${data.likes || 0}</button>
               <button class="action-btn-mini" style="cursor: default; pointer-events: none;">💬 댓글 ${(data.comments || []).length}</button>
