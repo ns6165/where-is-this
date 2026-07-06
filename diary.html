@@ -668,6 +668,21 @@ button {
     btn.innerText = "업로드 중...";
 
    try {
+     try {
+      // [필터링 추가] 1. 서버에 검사 요청
+      const response = await fetch("https://us-central1-where-is-this-ef31b.cloudfunctions.net/checkText", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: comment })
+      });
+      const result = await response.json();
+      
+      if (result.isToxic) {
+        showToast("⚠️ 바르고 고운 말을 사용해 주세요!");
+        btn.disabled = false;
+        btn.innerText = "탐험 일기 등록하기";
+        return; // 여기서 실행을 멈춤 (저장되지 않음)
+      }
   let photoURL = "";
   if (selectedFile) {
     const compressedFile = await compressImage(selectedFile, 800, 0.7);
