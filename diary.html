@@ -655,90 +655,64 @@ button {
   document.getElementById("filter-region-select").onchange = () => { loadDiaries(); };
 
   document.getElementById("student-upload-btn").onclick = async () => {
-  const region = document.getElementById("user-region").value;
-  const comment = document.getElementById("user-comment").value.trim();
-  const isPrivateChecked = document.getElementById("diary-privacy-check").checked; 
-  
-  const API_KEY = "AQ.Ab8RN6IbkNNqRsm7nEm3dSLEO8iFlNnAs1Qbfw7crJmm-Dkkxg";
+    const region = document.getElementById("user-region").value;
+    const comment = document.getElementById("user-comment").value.trim();
+    const isPrivateChecked = document.getElementById("diary-privacy-check").checked; 
 
-  if (!region) return showToast("탐험하신 지역을 선택해주세요! 📍");
-  if (!comment) return showToast("일기 내용을 작성해주세요! ✍️");
-  if (!userClassCode) return showToast("학급 인증 정보가 없습니다. 다시 로그인해 주세요.");
+    if (!region) return showToast("탐험하신 지역을 선택해주세요! 📍");
+    if (!comment) return showToast("일기 내용을 작성해주세요! ✍️");
+    if (!userClassCode) return showToast("학급 인증 정보가 없습니다. 다시 로그인해 주세요.");
 
-  // [추가] 1. 비속어 필터링 기능 (API 호출)
-  const btn = document.getElementById("student-upload-btn");
-  btn.disabled = true;
-  btn.innerText = "분석 및 업로드 중...";
+    const btn = document.getElementById("student-upload-btn");
+    btn.disabled = true;
+    btn.innerText = "업로드 중...";
 
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: `사용자의 글에 욕설이나 비속어가 있는지 판단해. 유해하면 true, 정상이면 false라고 JSON {"isToxic": boolean} 형식으로만 답해줘. 글: ${comment}` }] }]
-      })
-    });
+   try {
+  let photoURL = "";
+  if (selectedFile) {
+    const compressedFile = await compressImage(selectedFile, 800, 0.7);
     
-    const data = await response.json();
-    const result = JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g, ""));
-    
-    if (result.isToxic) {
-      showToast("⚠️ 부적절한 표현이 감지되어 등록할 수 없습니다!");
+    const storageRef = ref(storage, `diary_photos/${Date.now()}_${selectedFile.name}`);
+    const snapshot = await uploadBytes(storageRef, compressedFile);
+    photoURL = await getDownloadURL(snapshot.ref);
+  }
+
+      await addDoc(collection(db, "diaries"), {
+        regionName: region,
+        classCode: userClassCode, 
+        writer: currentNick,
+        uid: auth.currentUser.uid,
+        text: comment,
+        photo: photoURL,
+        isPublic: !isPrivateChecked, 
+        likes: 0,
+        likedBy: [],
+        comments: [],
+        createdAt: new Date()
+      });
+
+      showToast("일기가 성공적으로 등록되었습니다! 🎉");
+
+      document.getElementById("user-comment").value = "";
+      document.getElementById("photo-input").value = "";
+      document.getElementById("diary-privacy-check").checked = false; 
+      document.getElementById("image-preview").style.display = "none";
+      selectedFile = null;
       btn.disabled = false;
       btn.innerText = "탐험 일기 등록하기";
-      return; // 등록 중단
+
+      document.getElementById("write-section").classList.remove("panel-active");
+      document.getElementById("main-section").classList.add("panel-active");
+
+      setTimeout(() => loadDiaries(), 300);
+
+    } catch (e) {
+      console.error(e);
+      showToast("등록 실패. 다시 시도해 주세요.");
+      btn.disabled = false;
+      btn.innerText = "탐험 일기 등록하기";
     }
-  } catch (err) {
-    console.error("필터링 분석 오류:", err);
-    // 필터링 서버가 일시적으로 안 될 경우, 심사위원들에게 보여줄 오류 처리
-  }
-
-  // 2. 이후 기존 업로드 로직 시작
-  try {
-    let photoURL = "";
-    if (selectedFile) {
-      const compressedFile = await compressImage(selectedFile, 800, 0.7);
-      const storageRef = ref(storage, `diary_photos/${Date.now()}_${selectedFile.name}`);
-      const snapshot = await uploadBytes(storageRef, compressedFile);
-      photoURL = await getDownloadURL(snapshot.ref);
-    }
-
-    await addDoc(collection(db, "diaries"), {
-      regionName: region,
-      classCode: userClassCode, 
-      writer: currentNick,
-      uid: auth.currentUser.uid,
-      text: comment,
-      photo: photoURL,
-      isPublic: !isPrivateChecked, 
-      likes: 0,
-      likedBy: [],
-      comments: [],
-      createdAt: new Date()
-    });
-
-    showToast("일기가 성공적으로 등록되었습니다! 🎉");
-    
-    // UI 초기화 및 정리
-    document.getElementById("user-comment").value = "";
-    document.getElementById("photo-input").value = "";
-    document.getElementById("diary-privacy-check").checked = false; 
-    document.getElementById("image-preview").style.display = "none";
-    selectedFile = null;
-    btn.disabled = false;
-    btn.innerText = "탐험 일기 등록하기";
-
-    document.getElementById("write-section").classList.remove("panel-active");
-    document.getElementById("main-section").classList.add("panel-active");
-    setTimeout(() => loadDiaries(), 300);
-
-  } catch (e) {
-    console.error(e);
-    showToast("등록 실패. 다시 시도해 주세요.");
-    btn.disabled = false;
-    btn.innerText = "탐험 일기 등록하기";
-  }
-};
+  };
   function compressImage(file, maxWidth, quality) {
   return new Promise((resolve) => {
     const reader = new FileReader();
