@@ -667,8 +667,7 @@ button {
     const btn = document.getElementById("student-upload-btn");
     btn.disabled = true;
     btn.innerText = "업로드 중...";
-
- 
+    
      try {
       // [필터링 추가] 1. 서버에 검사 요청
       const response = await fetch("https://us-central1-where-is-this-ef31b.cloudfunctions.net/checkText", {
