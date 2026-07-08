@@ -653,7 +653,7 @@ button {
   };
 
   document.getElementById("filter-region-select").onchange = () => { loadDiaries(); };
-document.getElementById("student-upload-btn").onclick = async () => {
+  document.getElementById("student-upload-btn").onclick = async () => {
     const region = document.getElementById("user-region").value;
     const comment = document.getElementById("user-comment").value.trim();
     const isPrivateChecked = document.getElementById("diary-privacy-check").checked; 
@@ -667,22 +667,29 @@ document.getElementById("student-upload-btn").onclick = async () => {
     btn.innerText = "안전 검사 중...";
 
     try {
-        // 1. 서버 필터링 검사
-        const response = await fetch('https://korean-bad-words-filter.onrender.com/check', {
+        // 1. API 호출 (발급받은 키 적용)
+        const response = await fetch('https://api.kr-filter.com/api/v1/filter', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: comment })
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-api-key': 'aMnSawQX-5AKZ5pqJr9DuQ4nN6h5Kvr6Eqlx19lWuCQ' 
+            },
+            body: JSON.stringify({
+                text: comment,
+                mode: 'FILTER' // 비속어 자동 마스킹
+            })
         });
         const result = await response.json();
 
-        if (result.isToxic) {
-            alert("⚠️ 부적절한 표현입니다. 바른 언어를 사용해 주세요!");
+        // 2. 필터링 결과 확인
+        if (result.detected && result.detected.length > 0) {
+            alert("⚠️ 부적절한 표현이 감지되어 등록할 수 없습니다. 내용을 수정해 주세요.");
             btn.disabled = false;
             btn.innerText = "탐험 일기 등록하기";
             return;
         }
 
-        // 2. 필터링 통과 시 업로드 로직
+        // 3. 필터링 통과 시 업로드 진행
         let photoURL = "";
         if (selectedFile) {
             const compressedFile = await compressImage(selectedFile, 800, 0.7);
@@ -691,12 +698,13 @@ document.getElementById("student-upload-btn").onclick = async () => {
             photoURL = await getDownloadURL(snapshot.ref);
         }
 
+        // 4. DB 저장
         await addDoc(collection(db, "diaries"), {
             regionName: region,
             classCode: userClassCode,
             writer: currentNick,
             uid: auth.currentUser.uid,
-            text: comment,
+            text: result.filtered || comment, // 필터링된 결과값 저장
             photo: photoURL,
             isPublic: !isPrivateChecked,
             likes: 0,
