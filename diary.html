@@ -340,7 +340,12 @@ button {
               <option value="">탐험할 지역을 선택하세요 (전체보기)</option>
               <option value="경주시">경주시</option><option value="안동시">안동시</option><option value="김천시">김천시</option>
               <option value="문경시">문경시</option><option value="영덕군">영덕군</option><option value="예천군">예천군</option>
-              <option value="울릉군">울릉군</option><option value="독도">독도</option>
+              <option value="상주시">상주시</option><option value="김천시">김천시</option><option value="성주군">성주군</option>
+              <option value="고령군">고령군</option><option value="칠곡군">칠곡군</option><option value="영양군">영양군</option>
+              <option value="봉화군">봉화군</option><option value="울진군">울진군</option><option value="청송군">청송군</option>
+              <option value="포항시">포항시</option><option value="영천시">영천시</option><option value="경산시">경산시</option>
+              <option value="청도군">청도군</option><option value="의성군">의성군</option><option value="울릉군">울릉군</option>
+              <option value="독도">독도</option>
             </select>
           </div>
 
@@ -478,24 +483,47 @@ button {
       }
     } catch (e) { console.error(e); }
   };
-
-  window.addComment = async (postId) => {
+window.addComment = async (postId) => {
     const input = document.getElementById(`comment-input-${postId}`);
-    if (!input.value) return showToast("댓글 내용을 입력해주세요!");
+    const commentText = input.value.trim();
+    if (!commentText) return showToast("댓글 내용을 입력해주세요!");
+
     try {
-      const postRef = doc(db, "diaries", postId);
-      await updateDoc(postRef, {
-        comments: arrayUnion({
-          writer: currentNick,
-          uid: auth.currentUser.uid,
-          text: input.value,
-          createdAt: new Date().toISOString()
-        })
-      });
-      input.value = "";
-      showToast("댓글이 등록되었습니다! 💬");
-    } catch (e) { console.error(e); }
-  };
+        const response = await fetch('https://api.kr-filter.com/api/v1/filter', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-api-key': 'aMnSawQX-5AKZ5pqJr9DuQ4nN6h5Kvr6Eqlx19lWuCQ' 
+            },
+            body: JSON.stringify({
+                text: commentText,
+                mode: 'FILTER' 
+            })
+        });
+        const result = await response.json();
+
+        if (result.detected && result.detected.length > 0) {
+            alert("⚠️ 부적절한 언어가 감지되었습니다. 내용을 수정해 주세요.");
+            return;
+        }
+
+        const postRef = doc(db, "diaries", postId);
+        await updateDoc(postRef, {
+            comments: arrayUnion({
+                writer: currentNick,
+                uid: auth.currentUser.uid,
+                text: result.filtered || commentText,
+                createdAt: new Date().toISOString()
+            })
+        });
+
+        input.value = "";
+        showToast("댓글이 등록되었습니다! 💬");
+    } catch (e) { 
+        console.error(e); 
+        showToast("댓글 등록 중 오류가 발생했습니다.");
+    }
+};
 
   window.deleteComment = async (postId, commentIdx) => {
     if (!confirm("댓글을 삭제하시겠습니까?")) return;
@@ -667,7 +695,6 @@ button {
     btn.innerText = "안전 검사 중...";
 
     try {
-        // 1. API 호출 (발급받은 키 적용)
         const response = await fetch('https://api.kr-filter.com/api/v1/filter', {
             method: 'POST',
             headers: { 
@@ -676,12 +703,11 @@ button {
             },
             body: JSON.stringify({
                 text: comment,
-                mode: 'FILTER' // 비속어 자동 마스킹
+                mode: 'FILTER' 
             })
         });
         const result = await response.json();
 
-        // 2. 필터링 결과 확인
         if (result.detected && result.detected.length > 0) {
             alert("⚠️ 부적절한 표현이 감지되어 등록할 수 없습니다. 내용을 수정해 주세요.");
             btn.disabled = false;
@@ -689,7 +715,6 @@ button {
             return;
         }
 
-        // 3. 필터링 통과 시 업로드 진행
         let photoURL = "";
         if (selectedFile) {
             const compressedFile = await compressImage(selectedFile, 800, 0.7);
@@ -698,13 +723,12 @@ button {
             photoURL = await getDownloadURL(snapshot.ref);
         }
 
-        // 4. DB 저장
         await addDoc(collection(db, "diaries"), {
             regionName: region,
             classCode: userClassCode,
             writer: currentNick,
             uid: auth.currentUser.uid,
-            text: result.filtered || comment, // 필터링된 결과값 저장
+            text: result.filtered || comment, 
             photo: photoURL,
             isPublic: !isPrivateChecked,
             likes: 0,
