@@ -828,7 +828,7 @@ window.handleFileSelect = (e) => {
             comments: arrayUnion({
                 writer: currentNick,
                 uid: auth.currentUser.uid,
-                text: result.filtered || commentText, // 필터링 결과 적용
+                text: result.filtered || commentText, 
                 createdAt: new Date().toISOString()
             })
         });

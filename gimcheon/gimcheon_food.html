@@ -746,7 +746,7 @@ window.handleFileSelect = (e) => {
             comments: arrayUnion({
                 writer: currentNick,
                 uid: auth.currentUser.uid,
-                text: result.filtered || commentText, // 필터링 결과 적용
+                text: result.filtered || commentText, 
                 createdAt: new Date().toISOString()
             })
         });
@@ -842,29 +842,47 @@ function loadPosts(collectionName = "recommendations", listId = "post-list", sor
     loadPosts("recommendations", "post-list", "likes");
     document.getElementById("sort-likes").style.cssText = "background:#3f8f5b; color:white;";
     document.getElementById("sort-recent").style.cssText = "background:white; color:#3f8f5b; border:1px solid #3f8f5b;";
-  };
-document.getElementById("student-upload-btn").addEventListener("click", async () => {
-  const comment = document.getElementById("user-comment").value;
+  };document.getElementById("student-upload-btn").addEventListener("click", async () => {
+  const comment = document.getElementById("user-comment").value.trim();
   if (!comment) return showToast("추천 내용을 입력해주세요! ✍️");
   
   const btn = document.getElementById("student-upload-btn");
   btn.disabled = true; 
-  btn.innerText = "업로드 중...";
+  btn.innerText = "안전 검사 중..."; // 사용자에게 검사 중임을 알림
 
   try {
-    let photoURL = "";
+    const response = await fetch('https://api.kr-filter.com/api/v1/filter', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'x-api-key': 'aMnSawQX-5AKZ5pqJr9DuQ4nN6h5Kvr6Eqlx19lWuCQ' 
+        },
+        body: JSON.stringify({ 
+            text: comment, 
+            mode: 'FILTER'
+        })
+    });
+    const result = await response.json();
 
+    if (result.detected && result.detected.length > 0) {
+        alert("⚠️ 부적절한 표현이 감지되었습니다. 바른 언어를 사용해 주세요!");
+        btn.disabled = false;
+        btn.innerText = "추천 등록하기";
+        return;
+    }
+
+    let photoURL = "";
     if (selectedFile) {
-      const storageRef = ref(storage, `town_photos/${Date.now()}_${selectedFile.name}`);
-      const snapshot = await uploadBytes(storageRef, selectedFile);
-      photoURL = await getDownloadURL(snapshot.ref); 
+        const storageRef = ref(storage, `town_photos/${Date.now()}_${selectedFile.name}`);
+        const snapshot = await uploadBytes(storageRef, selectedFile);
+        photoURL = await getDownloadURL(snapshot.ref); 
     }
 
     await addDoc(collection(db, "recommendations"), {
       town: TOWN_NAME,
       writer: currentNick,
       uid: auth.currentUser.uid,
-      text: comment,
+      text: result.filtered || comment,
       photo: photoURL, 
       likes: 0,
       likedBy: [],
@@ -881,7 +899,8 @@ document.getElementById("student-upload-btn").addEventListener("click", async ()
     btn.disabled = false;
     btn.innerText = "추천 등록하기";
 
-setTimeout(() => loadPosts("recommendations", "post-list", "createdAt"), 300);
+    setTimeout(() => loadPosts("recommendations", "post-list", "createdAt"), 300);
+
   } catch (e) {
     console.error(e);
     showToast("등록 실패. 다시 시도해주세요.");
